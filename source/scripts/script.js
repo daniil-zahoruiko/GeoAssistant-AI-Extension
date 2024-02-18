@@ -1,9 +1,11 @@
 let button = document.getElementById("button")
-const canvas = document.getElementsByClassName("widget-in-game_content__oDaT9-canvas")
-
 
 button.onclick = function() {
-  alert("button clicked" + canvas.length);
-  console.log(canvas);
+    chrome.tabs.query({active: true, currentWindow: true}, function (tabs) {
+        chrome.scripting.executeScript({
+            target: {tabId: tabs[0].id},
+            files: ["./scripts/getCanvas.js"],
+        }).then(() => console.log("Script injected"))
+    });
 }
 

@@ -1,6 +1,7 @@
 {
  	"manifest_version": 3,
 	"name": "GeoGuessr Image  Extraction",
+	"permissions": ["scripting", "activeTab"],
  	"description": "Extracts image from a street view in GeoGuessr",
   	"author" : "Dmytro Avdieienko & Daniil Zahoruiko",
 	"version": "1.0.0",
