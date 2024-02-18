@@ -1,5 +1,5 @@
 {
- 	"manifest_version": 1,
+ 	"manifest_version": 3,
 	"name": "GeoGuessr Image  Extraction",
  	"description": "Extracts image from a street view in GeoGuessr",
   	"author" : "Dmytro Avdieienko & Daniil Zahoruiko",
