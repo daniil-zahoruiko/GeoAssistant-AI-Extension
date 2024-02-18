@@ -1,0 +1,11 @@
+{
+ 	"manifest_version": 1,
+	"name": "GeoGuessr Image  Extraction",
+ 	"description": "Extracts image from a street view in GeoGuessr",
+  	"author" : "Dmytro Avdieienko & Daniil Zahoruiko",
+	"version": "1.0.0",
+  	"action": {
+    		"default_popup": "index.html",
+    		"default_icon": "./images/icon.webp"
+  	}
+}
