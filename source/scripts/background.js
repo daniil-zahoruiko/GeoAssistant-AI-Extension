@@ -1,10 +1,7 @@
 const streetviewApiURL = "https://streetviewpixels-pa.googleapis.com/v1"
 
 function logURL(requestDetails) {
-    const url = requestDetails.url;
-    if(url.substring(0, url.lastIndexOf("/")) === streetviewApiURL){
-        console.log(`Loading: ${url}`);
-    }
+    console.log(`Loading: ${requestDetails.url}`);
 }
   
 chrome.webRequest.onBeforeRequest.addListener(logURL, {
