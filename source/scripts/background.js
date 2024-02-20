@@ -8,5 +8,5 @@ function logURL(requestDetails) {
 }
   
 chrome.webRequest.onBeforeRequest.addListener(logURL, {
-    urls: ["https://www.geoguessr.com/*", "https://streetviewpixels-pa.googleapis.com/v1/*"],
+    urls: ["https://streetviewpixels-pa.googleapis.com/v1/*"],
 });
