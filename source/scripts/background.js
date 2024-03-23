@@ -1,5 +1,5 @@
 // what panoramas on what tabs is stored in session storage
-let panoramas = {};   // keeps panoramas start positions
+/*let panoramas = {};   // keeps panoramas start positions
 let loadingPanos = {};  // panorama that's currently being loaded for each tab
 
 function separateParams(url, paramName, searchFirst = false)
@@ -75,4 +75,4 @@ chrome.storage.onChanged.addListener((changes) => {
             `Old value was ${oldValue}, new value is ${newValue}.`
         );
     }
-});
+});*/

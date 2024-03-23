@@ -1,3 +1,17 @@
+(async() => {
+    const src1 = chrome.runtime.getURL("scripts/Google_Maps_Promise.js");
+    const googleMapsPromiseModule = await import(src1);
+    // const src2 = chrome.runtime.getURL("scripts/Run_code_as_client.js");
+    // const runAsClientModule = await import(src2);
+
+    googleMapsPromiseModule.googleMapsPromise.then(() => {
+        var script = document.createElement('script');
+        script.src = chrome.runtime.getURL("scripts/injected.js");
+        (document.head || document.documentElement).appendChild(script);
+    });
+})();
+
+/*
 function trackMouse(e)
 {
     console.log(e);
@@ -31,4 +45,4 @@ const elementObserver = new MutationObserver(function (mutations, mutationInstan
 elementObserver.observe(document, {
     childList: true,
     subtree:   true
-});
+});*/

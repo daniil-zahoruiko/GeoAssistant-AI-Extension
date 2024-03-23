@@ -5,8 +5,14 @@
 	"host_permissions": ["https://www.geoguessr.com/*", 
 						 "https://maps.googleapis.com/$rpc/google.internal.maps.mapsjs.v1.MapsJsInternalService/GetMetadata", 
 						 "https://streetviewpixels-pa.googleapis.com/v1/*",
-						 "https://maps.googleapis.com/maps/api/js/GeoPhotoService.GetMetadata*"],
+						 "https://maps.googleapis.com/maps/api/js/GeoPhotoService.GetMetadata*",
+						 "<all_urls>"],
  	"description": "Extracts image from a street view in GeoGuessr",
+	"web_accessible_resources": [{
+		"matches": ["<all_urls>"],
+		"resources": ["scripts/Google_Maps_Promise.js",
+					  "scripts/injected.js"]
+	}],
   	"author" : "Dmytro Avdieienko & Daniil Zahoruiko",
 	"version": "1.0.0",
   	"action": {
