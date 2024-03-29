@@ -1,6 +1,58 @@
-// what panoramas on what tabs is stored in session storage
-/*let panoramas = {};   // keeps panoramas start positions
-let loadingPanos = {};  // panorama that's currently being loaded for each tab
+// initialize mutex(prevents race conditions with access to chrome storage)
+var Mutex = function() {
+    this._busy  = false;
+    this._queue = [];
+};
+
+Mutex.prototype.synchronize = function(task) {
+    this._queue.push(task);
+    if (!this._busy) this._dequeue();
+};
+
+Mutex.prototype._dequeue = function() {
+    this._busy = true;
+    var next = this._queue.shift();
+
+    if (next)
+        this._execute(next);
+    else
+        this._busy = false;
+};
+
+Mutex.prototype._execute = function(task) {
+    var self = this;
+
+    task().then(function() {
+        self._dequeue();
+    }, function() {
+        self._dequeue();
+    });
+};
+
+const mutex = new Mutex();
+
+chrome.runtime.onMessage.addListener(
+    function(request, sender, sendResponse) {
+        const tabId = sender.tab.id;
+        if(request.loadingStatus) {
+            const tabInfo = {loading: true, tiles: [], zoom: 0}  // TODO: deal with zoom
+            let kvp = {}
+            kvp[tabId] = tabInfo;
+            chrome.storage.session.set(kvp).then(() => console.log(`tab ${tabId} is reading`));
+        }
+        else {
+            let kvp = {}
+            kvp[tabId] = null;
+            chrome.storage.session.get(kvp, (res) => {
+                if(res[tabId] != null) {
+                    kvp[tabId] = res[tabId];
+                    kvp[tabId].loadingStatus = false;
+                    chrome.storage.session.set(kvp).then(() => {console.log(`tab ${tabId} stopped reading`); console.log(kvp[tabId].tiles);});
+                }
+            });
+        }
+    }
+);
 
 function separateParams(url, paramName, searchFirst = false)
 {
@@ -15,19 +67,20 @@ function separateParams(url, paramName, searchFirst = false)
     return url.substring(pos, url.indexOf("&", pos));
 }
 
-function changePano(requestDetails) {
-    const decodedData = decodeURIComponent(String.fromCharCode.apply(null,
-        new Uint8Array(requestDetails.requestBody.raw[0].bytes)));
-    const kvp = {}
-    kvp[requestDetails.tabId] = JSON.parse(decodedData)[2][0][0][1];
-
-    chrome.storage.session.set(kvp)
-    loadingPanos[requestDetails.tabId] = kvp[requestDetails.tabId];
+function doneLoading(panoId, tabId) {
+    let kvp = {}
+    kvp[tabId] = null;
+    console.log(`done loading ${panoId}`);
+    chrome.storage.local.get(kvp, (res) => {
+        console.log([res[tabId].panoramas[panoId].tiles]);
+    });
 }
 
 function newTile(requestDetails) {
     const url = requestDetails.url;
-    
+    const tabId = requestDetails.tabId;
+    console.log(url);
+
     const panoId = separateParams(url, "panoid", true),
             x = parseInt(separateParams(url, "x")),
             y = parseInt(separateParams(url, "y")),
@@ -35,44 +88,42 @@ function newTile(requestDetails) {
     
     if(zoom !== 0)
     {
-        panoramas[panoId] = panoramas[panoId] ?? {loaded: false, tiles: []};
-        
-        if(!panoramas[panoId]["loaded"]) {
-            loadingPanos[requestDetails.tabId] = panoId;
-            panoramas[panoId]["tiles"] = [...panoramas[panoId]["tiles"], [x, y]];
-        }
+        mutex.synchronize(() => {
+            let kvp = {}
+            kvp[tabId] = null;
+            return chrome.storage.local.get(kvp).then((res) => {
+                if(res[tabId] != null) {
+                    kvp[tabId] = res[tabId];
+                    if(kvp[tabId].panoramas[panoId] == null) {
+                        kvp[tabId].panoramas[panoId] = {};
+                        kvp[tabId].panoramas[panoId].tiles = [];
+                    }
+                    kvp[tabId].panoramas[panoId].tiles = [...kvp[tabId].panoramas[panoId].tiles, [x, y]];
+                }
+                else {
+                    kvp[tabId] = {};
+                    kvp[tabId].panoramas = {};
+                    kvp[tabId].panoramas[panoId] = {};
+                    kvp[tabId].panoramas[panoId].tiles = [[x, y]];
+                }
+                if(kvp[tabId].panoramas[panoId].loadingStatus === true || kvp[tabId].panoramas[panoId].loadingStatus == null) {
+                    console.log(kvp[tabId].panoramas[panoId].tiles);
+                    kvp[tabId].panoramas[panoId].loadingStatus = true;
+                    if(kvp[tabId].panoramas[panoId].timer != null) {
+                        console.log("clearing timeout");
+                        clearTimeout(kvp[tabId].panoramas[panoId].timer);
+                    }
+                    kvp[tabId].panoramas[panoId].timer = setTimeout(() => doneLoading(panoId, tabId), 200);
+                    return chrome.storage.local.set(kvp).then(() => Promise.resolve());
+                }
+                else {
+                    return Promise.resolve();
+                }
+            });
+        });
     }
 }
-
-function doneLoading(requestDetails) {
-    const panoId = loadingPanos[requestDetails.tabId];
-    if(panoId != null && panoramas[panoId] != null){
-        panoramas[panoId]["loaded"] = true;
-        console.log(`Panorama ${panoId} was loaded.`,
-                `Its coordinates:`, 
-                panoramas[panoId]["tiles"]);
-        loadingPanos[requestDetails.tabId] = null;
-    }
-}
-
-chrome.webRequest.onBeforeRequest.addListener(changePano, 
-    { urls: ["https://maps.googleapis.com/$rpc/google.internal.maps.mapsjs.v1.MapsJsInternalService/GetMetadata"] },
-    ['requestBody']
-);
 
 chrome.webRequest.onBeforeRequest.addListener(newTile, 
     { urls: ["https://streetviewpixels-pa.googleapis.com/v1/*"] }  
 );
-
-chrome.webRequest.onBeforeRequest.addListener(doneLoading,
-    { urls: ["https://maps.googleapis.com/maps/api/js/GeoPhotoService.GetMetadata*"] }
-);
-
-chrome.storage.onChanged.addListener((changes) => {
-    for (let [key, { oldValue, newValue }] of Object.entries(changes)) {
-        console.log(
-            `Panorama on tab ${key} was changed.`,
-            `Old value was ${oldValue}, new value is ${newValue}.`
-        );
-    }
-});*/

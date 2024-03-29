@@ -1,12 +1,35 @@
-const google = window.google;
+function handlePositionChanged() {
+    console.log('position changed');
+    // var event = new CustomEvent("panoLoadingStart", {});
+    // window.dispatchEvent(event);
+}
 
-console.log(google);
+function handleLinksChanged() {
+    console.log('links changed');
+    var event = new CustomEvent("panoLoadingEnd", {});
+    window.dispatchEvent(event);
+}
 
-const oldSV = google.maps.StreetViewPanorama;
-google.maps.StreetViewPanorama = Object.assign(function (...args) {
-    const res = oldSV.apply(this, args);
-    this.addListener('position_changed', () => console.log('position changed'));
-    return res;
-}, {
-    prototype: Object.create(oldSV.prototype)
-});
+function initStreetView() {
+    google.maps.StreetViewPanorama = class extends google.maps.StreetViewPanorama {
+        constructor(...args) {
+            super(...args);
+
+            // this.addListener('position_changed', () => handlePositionChanged());
+            // this.addListener('pov_changed', () => console.log(this.getPov(), this.getPhotographerPov()));
+            // this.addListener('links_changed', () => handleLinksChanged());
+        }
+    }
+}
+
+(function () {
+    console.log("asdasdasd");
+    new MutationObserver(function() {
+        let script = document.querySelector("[src*='maps.googleapis.com/maps/api']");
+
+        if (script) {
+            this.disconnect();
+            script.onload = () => initStreetView();
+        }
+    }).observe(document.head, {childList: true, subtree: true});
+})();
