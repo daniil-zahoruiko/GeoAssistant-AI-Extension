@@ -1,4 +1,4 @@
-// initialize mutex(prevents race conditions with access to chrome storage)
+// initialize mutex(prevents race conditions with access to chrome storage)  (move it to a class?)
 var Mutex = function() {
     this._busy  = false;
     this._queue = [];
