@@ -73,7 +73,10 @@ function doneLoading(panoId, tabId) {
     console.log(`done loading ${panoId}`);
     chrome.storage.local.get(kvp, (res) => {
         console.log([res[tabId].panoramas[panoId].tiles]);
+        res[tabId].panoramas[panoId].loadingStatus = false;
+        chrome.storage.local.set(res);
     });
+    chrome.storage.local.get('initialPOV', (res) => console.log(res));
 }
 
 function newTile(requestDetails) {

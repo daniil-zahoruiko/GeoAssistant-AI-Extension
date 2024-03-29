@@ -7,7 +7,7 @@ window.addEventListener('mouseup', (e) => {
 });
 
 window.addEventListener('sendPOV', (e) => {
-    chrome.storage.set({'initialPOV': e.detail});
+    chrome.storage.local.set({'initialPOV': e.detail});
 });
 
 (async() => {

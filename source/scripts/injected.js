@@ -1,4 +1,5 @@
 var pov;
+var first_pov = false;
 
 function handlePositionChanged(panorama) {
     // console.log('position changed', Date.now());
@@ -17,7 +18,17 @@ function initStreetView() {
             super(...args);
 
             this.addListener('position_changed', () => handlePositionChanged(this));
-            this.addListener('pov_changed', () => pov = this.getPov());
+            this.addListener('pov_changed', () => {
+                if(!first_pov) {
+                    first_pov = true;
+                }
+                else {
+                    if(!pov) {
+                        window.dispatchEvent(new CustomEvent('sendPOV', {detail: this.getPov()}));
+                    }
+                    pov = this.getPov()
+                }
+            });
         }
     }
 }
