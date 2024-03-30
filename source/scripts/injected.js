@@ -8,6 +8,21 @@ function handlePositionChanged(panorama) {
     // window.dispatchEvent(event);
 }
 
+function handlePovChanged(panorama) {
+    if(!first_pov) {
+        first_pov = true;
+    }
+    else {
+        if(!pov) {
+            window.dispatchEvent(new CustomEvent('sendPOV', {detail: panorama.getPov()}));
+        }
+        else if(pov !== panorama.getPov()) {
+            window.dispatchEvent(new CustomEvent('POVchanged', {detail: panorama.getPov()}));
+        }
+        pov = panorama.getPov();
+    }
+}
+
 window.addEventListener('fetchPOV', (e) => {
     window.dispatchEvent(new CustomEvent('sendPOV', {detail: pov}));
 });
@@ -18,17 +33,7 @@ function initStreetView() {
             super(...args);
 
             this.addListener('position_changed', () => handlePositionChanged(this));
-            this.addListener('pov_changed', () => {
-                if(!first_pov) {
-                    first_pov = true;
-                }
-                else {
-                    if(!pov) {
-                        window.dispatchEvent(new CustomEvent('sendPOV', {detail: this.getPov()}));
-                    }
-                    pov = this.getPov()
-                }
-            });
+            this.addListener('pov_changed', () => handlePovChanged(this));
         }
     }
 }

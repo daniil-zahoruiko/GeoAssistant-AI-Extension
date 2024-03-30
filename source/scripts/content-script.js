@@ -1,5 +1,5 @@
 window.addEventListener('mouseup', (e) => {
-    chrome.storage.local.get('mousemoved', (res) => {
+    chrome.storage.local.get({'mousemoved': true}, (res) => {
         if(!res.mousemoved) {
             window.dispatchEvent(new CustomEvent('fetchPOV', {}));
         }
@@ -7,7 +7,11 @@ window.addEventListener('mouseup', (e) => {
 });
 
 window.addEventListener('sendPOV', (e) => {
-    chrome.storage.local.set({'initialPOV': e.detail});
+    chrome.runtime.sendMessage({msg: 'initialPOV', value: e.detail});
+});
+
+window.addEventListener('POVchanged', (e) => {
+    chrome.runtime.sendMessage({msg: 'POVchanged', value: e.detail});
 });
 
 (async() => {
