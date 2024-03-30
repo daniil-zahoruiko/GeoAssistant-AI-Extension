@@ -31,29 +31,6 @@ Mutex.prototype._execute = function(task) {
 
 const mutex = new Mutex();
 
-chrome.runtime.onMessage.addListener(
-    function(request, sender, sendResponse) {
-        const tabId = sender.tab.id;
-        if(request.loadingStatus) {
-            const tabInfo = {loading: true, tiles: [], zoom: 0}  // TODO: deal with zoom
-            let kvp = {}
-            kvp[tabId] = tabInfo;
-            chrome.storage.session.set(kvp).then(() => console.log(`tab ${tabId} is reading`));
-        }
-        else {
-            let kvp = {}
-            kvp[tabId] = null;
-            chrome.storage.session.get(kvp, (res) => {
-                if(res[tabId] != null) {
-                    kvp[tabId] = res[tabId];
-                    kvp[tabId].loadingStatus = false;
-                    chrome.storage.session.set(kvp).then(() => {console.log(`tab ${tabId} stopped reading`); console.log(kvp[tabId].tiles);});
-                }
-            });
-        }
-    }
-);
-
 function separateParams(url, paramName, searchFirst = false)
 {
     var pos = -1;
@@ -70,13 +47,25 @@ function separateParams(url, paramName, searchFirst = false)
 function doneLoading(panoId, tabId) {
     let kvp = {}
     kvp[tabId] = null;
+    kvp.initialPOV = null;
     console.log(`done loading ${panoId}`);
     chrome.storage.local.get(kvp, (res) => {
-        console.log([res[tabId].panoramas[panoId].tiles]);
+        console.log(res)
+        var topleft = 0, bottomright = 0;
+        for(let i = 1; i < res[tabId].panoramas[panoId].tiles.length; i++) {
+            const sum = res[tabId].panoramas[panoId].tiles[i][0] + res[tabId].panoramas[panoId].tiles[i][1];
+            if(sum < res[tabId].panoramas[panoId].tiles[topleft][0] + res[tabId].panoramas[panoId].tiles[topleft][1]) {
+                topleft = i;
+            }
+            if(sum > res[tabId].panoramas[panoId].tiles[bottomright][0] + res[tabId].panoramas[panoId].tiles[bottomright][1]) {
+                bottomright = i;
+            }
+        }
+        //chrome.storage.local.get('initialPOV', (res) => console.log(res));
         res[tabId].panoramas[panoId].loadingStatus = false;
-        chrome.storage.local.set(res);
+        chrome.storage.local.set(res)
+        getObjects(res[tabId].panoramas[panoId].tiles[topleft], res[tabId].panoramas[panoId].tiles[bottomright], panoId, 4);
     });
-    chrome.storage.local.get('initialPOV', (res) => console.log(res));
 }
 
 function newTile(requestDetails) {
@@ -89,7 +78,7 @@ function newTile(requestDetails) {
             y = parseInt(separateParams(url, "y")),
             zoom = parseInt(separateParams(url, "zoom"));
     
-    if(zoom !== 0)
+    if(zoom === 4) // TODO: fix zoom
     {
         mutex.synchronize(() => {
             let kvp = {}
@@ -116,7 +105,7 @@ function newTile(requestDetails) {
                         console.log("clearing timeout");
                         clearTimeout(kvp[tabId].panoramas[panoId].timer);
                     }
-                    kvp[tabId].panoramas[panoId].timer = setTimeout(() => doneLoading(panoId, tabId), 200);
+                    kvp[tabId].panoramas[panoId].timer = setTimeout(() => doneLoading(panoId, tabId), 300);
                     return chrome.storage.local.set(kvp).then(() => Promise.resolve());
                 }
                 else {
@@ -125,6 +114,23 @@ function newTile(requestDetails) {
             });
         });
     }
+}
+
+async function getObjects(topleft, bottomright, panoId, zoom) {
+    const url = "http://127.0.0.1:5000/objects?"
+    console.log(topleft);
+    console.log(bottomright);
+    const response = await fetch(url + new URLSearchParams({
+        'topleftx': topleft[0],
+        'toplefty': topleft[1],
+        'bottomrightx': bottomright[0],
+        'bottomrighty': bottomright[1],
+        'panoId': panoId,
+        'zoom': zoom
+    }), {
+        method: "GET",
+        mode: 'cors'
+    })
 }
 
 chrome.webRequest.onBeforeRequest.addListener(newTile, 
