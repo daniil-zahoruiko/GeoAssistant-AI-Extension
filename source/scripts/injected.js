@@ -9,16 +9,13 @@ function handlePositionChanged(panorama) {
 }
 
 function handlePovChanged(panorama) {
-    console.log(panorama.getPov());
     if(!first_pov) {
         first_pov = true;
     }
-    else {
-        if(pov !== panorama.getPov()) {
-            window.dispatchEvent(new CustomEvent('POVchanged', {detail: panorama.getPov()}));
-        }
-        pov = panorama.getPov();
+    else if(pov.heading !== panorama.getPov().heading || pov.pitch !== panorama.getPov().pitch) {
+        window.dispatchEvent(new CustomEvent('POVchanged', {detail: panorama.getPov()}));
     }
+    pov = panorama.getPov();
 }
 
 window.addEventListener('fetchOriginPOV', (e) => {
