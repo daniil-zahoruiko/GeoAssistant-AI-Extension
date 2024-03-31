@@ -53,8 +53,7 @@ function newTile(requestDetails) {
             x = parseInt(separateParams(url, "x")),
             y = parseInt(separateParams(url, "y")),
             zoom = parseInt(separateParams(url, "zoom"));
-    
-    if(zoom >= 4) {
+    if(zoom >= 3) {
         let kvp = {}
         kvp[tabId] = null;
         mutex.synchronize(() => {
