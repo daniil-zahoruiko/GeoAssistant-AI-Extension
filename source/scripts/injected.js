@@ -9,22 +9,23 @@ function handlePositionChanged(panorama) {
 }
 
 function handlePovChanged(panorama) {
+    console.log(panorama.getPov());
     if(!first_pov) {
         first_pov = true;
     }
     else {
-        if(!pov) {
-            window.dispatchEvent(new CustomEvent('sendPOV', {detail: panorama.getPov()}));
-        }
-        else if(pov !== panorama.getPov()) {
+        if(pov !== panorama.getPov()) {
             window.dispatchEvent(new CustomEvent('POVchanged', {detail: panorama.getPov()}));
         }
         pov = panorama.getPov();
     }
 }
 
-window.addEventListener('fetchPOV', (e) => {
-    window.dispatchEvent(new CustomEvent('sendPOV', {detail: pov}));
+window.addEventListener('fetchOriginPOV', (e) => {
+    var streetViewService = new google.maps.StreetViewService();
+    streetViewService.getPanorama({pano: e.detail}, function(data, status) {
+        window.dispatchEvent(new CustomEvent('sendOriginPOV', {detail: data.tiles}));
+    })
 });
 
 function initStreetView() {
