@@ -29,7 +29,39 @@ Mutex.prototype._execute = function(task) {
     });
 };
 
+var Fetcher = function () {
+    this._busy = false;
+    this._nextTask = null;
+}
+
+Fetcher.prototype.setNextTask = function(task) {
+    this._nextTask = task;
+    console.log(this._busy);
+    if(!this._busy) {
+        this._busy = true;
+        this._execute(task);
+    }
+}
+
+Fetcher.prototype._execute = function(task) {
+    var self = this;
+    self._nextTask = null;
+
+    task().then(function () {
+        if(self._nextTask) 
+            self._execute(self._nextTask);
+        else 
+            self._busy = false;
+    }, function () {
+        if(self._nextTask) 
+            self._execute(self._nextTask);
+        else 
+            self._busy = false;
+    });
+}
+
 const mutex = new Mutex();
+const fetcher = new Fetcher();
 
 function separateParams(url, paramName, searchFirst = false)
 {
@@ -66,7 +98,9 @@ function newTile(requestDetails) {
                     res[tabId].pano = panoId;
                     chrome.storage.local.set(res, () => chrome.tabs.sendMessage(tabId, {msg: 'fetchOriginPOV', value: panoId})).then(() => Promise.resolve());
                 }
-                return Promise.resolve();
+                else {
+                    return Promise.resolve();
+                }
             });
         });
     }
@@ -109,28 +143,35 @@ function handleOriginPovChange(tiles, sender) {
 async function updateObjects(tabId) {
     let kvp = {}
     kvp[tabId] = null;
-    await chrome.storage.local.get(kvp, async (res) => {
-        console.log(res);
-        if(res[tabId] != null) {
-            const url = "http://127.0.0.1:5000/objects?";
-            return await fetch(url + new URLSearchParams({
-                'tileWidth': res[tabId].tileSize.width,
-                'tileHeight': res[tabId].tileSize.height,
-                'worldWidth': res[tabId].worldSize.width,
-                'worldHeight': res[tabId].worldSize.height,
-                'originHeading': res[tabId].originPov.heading,
-                'originPitch': res[tabId].originPov.pitch,
-                'currentHeading': res[tabId].currentPov.heading,
-                'currentPitch': res[tabId].currentPov.pitch,
-                'panoId': res[tabId].pano,
-                'zoom': 4
-            }), {
-                method: "GET",
-                mode: 'cors'
-            }).then((boundingBoxes) => {
-                // display new bounding boxes
-            });
-        }
+    fetcher.setNextTask(() => {
+        return chrome.storage.local.get(kvp).then((res) =>
+        {
+            console.log(res);
+            if(res[tabId] != null) {
+                const url = "http://127.0.0.1:5000/objects?";
+                return fetch(url + new URLSearchParams({
+                    'tileWidth': res[tabId].tileSize.width,
+                    'tileHeight': res[tabId].tileSize.height,
+                    'worldWidth': res[tabId].worldSize.width,
+                    'worldHeight': res[tabId].worldSize.height,
+                    'originHeading': res[tabId].originPov.heading,
+                    'originPitch': res[tabId].originPov.pitch,
+                    'currentHeading': res[tabId].currentPov.heading,
+                    'currentPitch': res[tabId].currentPov.pitch,
+                    'panoId': res[tabId].pano,
+                    'zoom': 4
+                }), {
+                    method: "GET",
+                    mode: 'cors'
+                }).then((boundingBoxes) => {
+                    // display new bounding boxes
+                    return Promise.resolve();
+                });
+            }
+            else {
+                return Promise.resolve();
+            }
+        });
     });
 }
 
