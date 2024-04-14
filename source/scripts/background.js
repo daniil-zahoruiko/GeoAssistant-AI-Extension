@@ -36,7 +36,6 @@ var Fetcher = function () {
 
 Fetcher.prototype.setNextTask = function(task) {
     this._nextTask = task;
-    console.log(this._busy);
     if(!this._busy) {
         this._busy = true;
         this._execute(task);
@@ -79,7 +78,7 @@ function separateParams(url, paramName, searchFirst = false)
 function newTile(requestDetails) {
     const url = requestDetails.url;
     const tabId = requestDetails.tabId;
-    console.log(url);
+    // console.log(url);
 
     const panoId = separateParams(url, "panoid", true),
             x = parseInt(separateParams(url, "x")),
@@ -94,7 +93,6 @@ function newTile(requestDetails) {
                     if(res[tabId] == null) {
                         res[tabId] = {};
                     }
-                    console.log('aaaa');
                     res[tabId].pano = panoId;
                     chrome.storage.local.set(res, () => chrome.tabs.sendMessage(tabId, {msg: 'fetchOriginPOV', value: panoId})).then(() => Promise.resolve());
                 }
@@ -111,7 +109,6 @@ function handlePovChanged(pov, sender) {
     let kvp = {};
     kvp[tabId] = null;
     chrome.storage.local.get(kvp, (res) => {
-        console.log('pov change');
         if(res[tabId] == null) {
             res[tabId] = {};
         }
@@ -126,11 +123,9 @@ function handlePovChanged(pov, sender) {
 
 function handleOriginPovChange(tiles, sender) {
     const tabId = sender.tab.id;
-    console.log('bbb');
     let kvp = {};
     kvp[tabId] = null;
     chrome.storage.local.get(kvp, (res) => {
-        console.log('origin pov change');
         if(res[tabId] != null) {
             res[tabId].originPov = {heading: tiles.originHeading, pitch: tiles.originPitch};
             res[tabId].tileSize = {width: tiles.tileSize.width, height: tiles.tileSize.height};
