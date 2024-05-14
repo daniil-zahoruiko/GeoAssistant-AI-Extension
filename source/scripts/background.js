@@ -135,6 +135,39 @@ function handleOriginPovChange(tiles, sender) {
     });
 }
 
+// TODO: maybe change these to POST
+
+async function handleImageSave() {
+    await chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
+        const tab = tabs[0];
+        
+        if(tab != null) {
+            const tabId = tab.id;
+            let kvp = {}
+            kvp[tabId] = null;
+            fetcher.setNextTask(() => {
+                return chrome.storage.local.get(kvp).then((res) =>
+                {
+                    console.log(res);
+                    if(res[tabId] != null) {
+                        const url = "http://127.0.0.1:5000/imsave?";
+                        return fetch(url + defaultURLSearchParams(res[tabId]), {
+                            method: "GET",
+                            mode: 'cors'
+                        }).then(() => {
+                            return Promise.resolve();
+                        });
+                    }
+                    else {
+                        return Promise.resolve();
+                    }
+                });
+            });
+        }
+    });
+    
+}
+
 async function updateObjects(tabId) {
     let kvp = {}
     kvp[tabId] = null;
@@ -144,18 +177,7 @@ async function updateObjects(tabId) {
             console.log(res);
             if(res[tabId] != null) {
                 const url = "http://127.0.0.1:5000/objects?";
-                return fetch(url + new URLSearchParams({
-                    'tileWidth': res[tabId].tileSize.width,
-                    'tileHeight': res[tabId].tileSize.height,
-                    'worldWidth': res[tabId].worldSize.width,
-                    'worldHeight': res[tabId].worldSize.height,
-                    'originHeading': res[tabId].originPov.heading,
-                    'originPitch': res[tabId].originPov.pitch,
-                    'currentHeading': res[tabId].currentPov.heading,
-                    'currentPitch': res[tabId].currentPov.pitch,
-                    'panoId': res[tabId].pano,
-                    'zoom': 4
-                }), {
+                return fetch(url + defaultURLSearchParams(res[tabId]), {
                     method: "GET",
                     mode: 'cors'
                 }).then((boundingBoxes) => {
@@ -170,6 +192,21 @@ async function updateObjects(tabId) {
     });
 }
 
+function defaultURLSearchParams(storageObj) {
+    return new URLSearchParams({
+        'tileWidth': storageObj.tileSize.width,
+        'tileHeight': storageObj.tileSize.height,
+        'worldWidth': storageObj.worldSize.width,
+        'worldHeight': storageObj.worldSize.height,
+        'originHeading': storageObj.originPov.heading,
+        'originPitch': storageObj.originPov.pitch,
+        'currentHeading': storageObj.currentPov.heading,
+        'currentPitch': storageObj.currentPov.pitch,
+        'panoId': storageObj.pano,
+        'zoom': 4   // TODO: make all levels of zoom work
+    });
+}
+
 chrome.webRequest.onBeforeRequest.addListener(newTile, 
     { urls: ["https://streetviewpixels-pa.googleapis.com/v1/*"] }  
 );
@@ -180,5 +217,8 @@ chrome.runtime.onMessage.addListener(function(msg, sender, sendResponse) {
     }
     else if(msg.msg === 'sendOriginPOV') {
         handleOriginPovChange(msg.value, sender);
+    }
+    else if(msg.msg === 'SaveImage') {
+        handleImageSave();
     }
 });

@@ -1,7 +1,7 @@
 {
  	"manifest_version": 3,
 	"name": "GeoGuessr Image  Extraction",
-	"permissions": ["scripting", "activeTab", "webRequest", "storage"],
+	"permissions": ["scripting", "activeTab", "webRequest", "storage", "tabs"],
 	"host_permissions": ["https://www.geoguessr.com/*", 
 						 "https://streetviewpixels-pa.googleapis.com/v1/*",
 						 "http://localhost/*"],
@@ -9,6 +9,10 @@
 	"web_accessible_resources": [{
 		"matches": ["https://www.geoguessr.com/*"],
 		"resources": ["scripts/injected.js"]
+	}, 
+	{ 
+		"matches": ["<all_urls>"],
+		"resources": ["config.json"]
 	}],
   	"author" : "Dmytro Avdieienko & Daniil Zahoruiko",
 	"version": "1.0.0",
