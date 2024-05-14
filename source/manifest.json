@@ -3,9 +3,7 @@
 	"name": "GeoGuessr Image  Extraction",
 	"permissions": ["scripting", "activeTab", "webRequest", "storage"],
 	"host_permissions": ["https://www.geoguessr.com/*", 
-						 "https://maps.googleapis.com/$rpc/google.internal.maps.mapsjs.v1.MapsJsInternalService/GetMetadata", 
 						 "https://streetviewpixels-pa.googleapis.com/v1/*",
-						 "https://maps.googleapis.com/maps/api/js/GeoPhotoService.GetMetadata*",
 						 "http://localhost/*"],
  	"description": "Extracts image from a street view in GeoGuessr",
 	"web_accessible_resources": [{
@@ -15,7 +13,7 @@
   	"author" : "Dmytro Avdieienko & Daniil Zahoruiko",
 	"version": "1.0.0",
   	"action": {
-		"default_popup": "index.html",
+		"default_popup": "./popup/popup.html",
 		"default_icon": "./images/icon.webp"
   	},
 	"background": {
