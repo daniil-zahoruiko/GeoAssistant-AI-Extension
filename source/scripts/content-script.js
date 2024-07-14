@@ -4,7 +4,10 @@ window.addEventListener('POVchanged', (e) => {
 
 chrome.runtime.onMessage.addListener(function(msg, sender, response) {
     if(msg.msg === 'fetchOriginPOV') {
-        window.dispatchEvent(new CustomEvent(msg.msg, {detail: msg.value}));
+        window.dispatchEvent(new CustomEvent( msg.msg, { detail: msg.value }));
+    }
+    else if(msg.msg === 'addBoundingBoxes') {
+        window.dispatchEvent(new CustomEvent( msg.msg, { detail: msg.data }));
     }
 });
 

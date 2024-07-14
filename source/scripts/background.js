@@ -180,8 +180,10 @@ async function updateObjects(tabId) {
                 return fetch(url + defaultURLSearchParams(res[tabId]), {
                     method: "GET",
                     mode: 'cors'
-                }).then((boundingBoxes) => {
-                    // display new bounding boxes
+                })
+                .then((data) => data.json())
+                .then((boundingBoxes) => {
+                    chrome.tabs.sendMessage(tabId, { msg: "addBoundingBoxes", data: { 'boundingBoxes': boundingBoxes, 'pov': { heading: res[tabId].currentPov.heading, pitch: res[tabId].currentPov.pitch } } });
                     return Promise.resolve();
                 });
             }
