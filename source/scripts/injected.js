@@ -108,7 +108,7 @@ function initOverlay(map) {
                 const topleftCoords = this.getPointOnScreen(this.topleftTheta, this.topleftPhi, currentPov.heading, currentPov.pitch);
                 const bottomrightCoords = this.getPointOnScreen(this.bottomrightTheta, this.bottomrightPhi, currentPov.heading, currentPov.pitch);
 
-                this.div.style.left = `${Math.min(topleftCoords.x, bottomrightCoords.x) - offset * width / 2}px`;
+                this.div.style.left = `${Math.min(topleftCoords.x, bottomrightCoords.x)}px`;
                 this.div.style.top = `${topleftCoords.y}px`;
                 this.div.style.width = `${Math.abs(bottomrightCoords.x - topleftCoords.x)}px`;
                 this.div.style.height = `${bottomrightCoords.y - topleftCoords.y}px`;
