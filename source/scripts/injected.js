@@ -48,6 +48,11 @@ function initOverlay(map) {
         cls;
         div;
 
+        toprightTheta;
+        toprightPhi;
+        bottomleftTheta;
+        bottomleftPhi;
+
         constructor(topleftx, toplefty, bottomrightx, bottomrighty, heading, pitch, cls) {
             super();
             this.cls = cls;
@@ -59,6 +64,14 @@ function initOverlay(map) {
             const bottomrightSphereCoords = this.pointToSphere(bottomrightx, bottomrighty, heading, pitch);
             this.bottomrightTheta = bottomrightSphereCoords.theta;
             this.bottomrightPhi = bottomrightSphereCoords.phi;
+
+            const toprightSphereCoords = this.pointToSphere(bottomrightx, toplefty, heading, pitch);
+            this.toprightTheta = toprightSphereCoords.theta;
+            this.toprightPhi = toprightSphereCoords.phi
+
+            const bottomleftSphereCoords = this.pointToSphere(topleftx, bottomrighty, heading, pitch);
+            this.bottomleftTheta = bottomleftSphereCoords.theta;
+            this.bottomleftPhi = bottomleftSphereCoords.phi;
         }
 
         onAdd() {
@@ -108,10 +121,18 @@ function initOverlay(map) {
                 const topleftCoords = this.getPointOnScreen(this.topleftTheta, this.topleftPhi, currentPov.heading, currentPov.pitch);
                 const bottomrightCoords = this.getPointOnScreen(this.bottomrightTheta, this.bottomrightPhi, currentPov.heading, currentPov.pitch);
 
-                this.div.style.left = `${Math.min(topleftCoords.x, bottomrightCoords.x)}px`;
-                this.div.style.top = `${topleftCoords.y}px`;
-                this.div.style.width = `${Math.abs(bottomrightCoords.x - topleftCoords.x)}px`;
-                this.div.style.height = `${bottomrightCoords.y - topleftCoords.y}px`;
+                const toprightCoords = this.getPointOnScreen(this.toprightTheta, this.toprightPhi, currentPov.heading, currentPov.pitch);
+                const bottomleftCoords = this.getPointOnScreen(this.bottomleftTheta, this.bottomleftPhi, currentPov.heading, currentPov.pitch);
+
+                console.log(topleftCoords);
+                console.log(toprightCoords);
+                console.log(bottomleftCoords);
+                console.log(bottomrightCoords);
+
+                this.div.style.left = `${Math.min(topleftCoords.x, bottomleftCoords.x)}px`;
+                this.div.style.top = `${Math.min(topleftCoords.y, toprightCoords.y)}px`;
+                this.div.style.width = `${Math.max(bottomrightCoords.x, toprightCoords.x) - Math.min(topleftCoords.x, bottomleftCoords.x)}px`;
+                this.div.style.height = `${Math.max(bottomrightCoords.y, bottomleftCoords.y) - Math.min(topleftCoords.y, toprightCoords.y)}px`;
             }
         }
 
@@ -123,7 +144,7 @@ function initOverlay(map) {
         }
 
         getPointOnScreen(theta, phi, heading, pitch) {
-            heading = this.toRadian(heading - 90);
+            heading = this.toRadian(heading);
             pitch = this.toRadian(90 - pitch);
             phi = (phi - heading + 2 * Math.PI) % (2 * Math.PI);
             const z = (this.canvasWidth / 2) / Math.tan(this.toRadian(127) / 2);
@@ -140,7 +161,7 @@ function initOverlay(map) {
         pointToSphere(x, y, heading, pitch) {
             x -= this.canvasWidth / 2;
             y = this.canvasHeight / 2 - y;
-            heading = this.toRadian(heading - 90);
+            heading = this.toRadian(heading);
             pitch = this.toRadian(90 - pitch);
 
             // focal length
