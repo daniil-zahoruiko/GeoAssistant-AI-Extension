@@ -2,10 +2,7 @@ var pov;
 var first_pov = false;
 
 function handlePositionChanged(panorama) {
-    // console.log('position changed', Date.now());
-    // console.log(panorama.getPov())
-    // var event = new CustomEvent("panoLoadingStart", {});
-    // window.dispatchEvent(event);
+    document.querySelectorAll('[class*="boundingBox"]').forEach(el => el.remove());
 }
 
 function handlePovChanged(panorama) {
@@ -43,15 +40,14 @@ function initOverlay(map) {
         topleftPhi;
         bottomrightTheta;
         bottomrightPhi;
-        canvasWidth;
-        canvasHeight;
-        cls;
-        div;
-
         toprightTheta;
         toprightPhi;
         bottomleftTheta;
         bottomleftPhi;
+        canvasWidth;
+        canvasHeight;
+        cls;
+        div;
 
         constructor(topleftx, toplefty, bottomrightx, bottomrighty, heading, pitch, cls) {
             super();
@@ -61,13 +57,14 @@ function initOverlay(map) {
             const topleftSphereCoords = this.pointToSphere(topleftx, toplefty, heading, pitch);
             this.topleftTheta = topleftSphereCoords.theta;
             this.topleftPhi = topleftSphereCoords.phi;
-            const bottomrightSphereCoords = this.pointToSphere(bottomrightx, bottomrighty, heading, pitch);
-            this.bottomrightTheta = bottomrightSphereCoords.theta;
-            this.bottomrightPhi = bottomrightSphereCoords.phi;
 
             const toprightSphereCoords = this.pointToSphere(bottomrightx, toplefty, heading, pitch);
             this.toprightTheta = toprightSphereCoords.theta;
             this.toprightPhi = toprightSphereCoords.phi
+
+            const bottomrightSphereCoords = this.pointToSphere(bottomrightx, bottomrighty, heading, pitch);
+            this.bottomrightTheta = bottomrightSphereCoords.theta;
+            this.bottomrightPhi = bottomrightSphereCoords.phi;
 
             const bottomleftSphereCoords = this.pointToSphere(topleftx, bottomrighty, heading, pitch);
             this.bottomleftTheta = bottomleftSphereCoords.theta;
@@ -75,15 +72,13 @@ function initOverlay(map) {
         }
 
         onAdd() {
-            const precision = 30;
+            const precision = 40;
 
             // this is supposed to prevent duplicating of images
             const className = `boundingBox${this.cls}`;
-            const currentPov = this.getMap().getPov();
-            const topleftCoords = this.getPointOnScreen(this.topleftTheta, this.topleftPhi, currentPov.heading, currentPov.pitch);
-            const bottomrightCoords = this.getPointOnScreen(this.bottomrightTheta, this.bottomrightPhi, currentPov.heading, currentPov.pitch);
-            const width = bottomrightCoords.x - topleftCoords.x;
-            const height = bottomrightCoords.y - topleftCoords.y;
+            const currentCoords = this.calculateCurrentCoords();
+            const centerX = currentCoords.Left + currentCoords.width / 2;
+            const centerY = currentCoords.top + currentCoords.height / 2;
             const boundingBoxes = document.getElementsByClassName(className);
             if(boundingBoxes.length > 0) {
                 delete this;
@@ -92,10 +87,13 @@ function initOverlay(map) {
             for(let i = 0; i < boundingBoxes.length; i++) {
                 const left = this.parsePxString(boundingBoxes[i].style.left);
                 const top = this.parsePxString(boundingBoxes[i].style.top);
-                const currWidth = this.parsePxString(boundingBoxes[i].style.width);
-                const currHeight = this.parsePxString(boundingBoxes[i].style.height);
+                const width = this.parsePxString(boundingBoxes[i].style.width);
+                const height = this.parsePxString(boundingBoxes[i].style.height);
+                
+                const currCenterX = left + width / 2;
+                const currCenterY = top + height / 2;
 
-                if(Math.abs(width - currWidth) < precision && Math.abs(height - currHeight) < precision && Math.abs(left - topleftCoords.x) < precision && Math.abs(top - topleftCoords.y) < precision) {
+                if(Math.abs(centerX - currCenterX) < precision && Math.abs(centerY - currCenterY) < precision) {
                     delete this;
                     return;
                 }
@@ -116,23 +114,13 @@ function initOverlay(map) {
             // calculate new position according to current pitch and heading
             this.refreshCanvasSize();
             if (this.div) {
-                const currentPov = this.getMap().getPov();
 
-                const topleftCoords = this.getPointOnScreen(this.topleftTheta, this.topleftPhi, currentPov.heading, currentPov.pitch);
-                const bottomrightCoords = this.getPointOnScreen(this.bottomrightTheta, this.bottomrightPhi, currentPov.heading, currentPov.pitch);
-
-                const toprightCoords = this.getPointOnScreen(this.toprightTheta, this.toprightPhi, currentPov.heading, currentPov.pitch);
-                const bottomleftCoords = this.getPointOnScreen(this.bottomleftTheta, this.bottomleftPhi, currentPov.heading, currentPov.pitch);
-
-                console.log(topleftCoords);
-                console.log(toprightCoords);
-                console.log(bottomleftCoords);
-                console.log(bottomrightCoords);
-
-                this.div.style.left = `${Math.min(topleftCoords.x, bottomleftCoords.x)}px`;
-                this.div.style.top = `${Math.min(topleftCoords.y, toprightCoords.y)}px`;
-                this.div.style.width = `${Math.max(bottomrightCoords.x, toprightCoords.x) - Math.min(topleftCoords.x, bottomleftCoords.x)}px`;
-                this.div.style.height = `${Math.max(bottomrightCoords.y, bottomleftCoords.y) - Math.min(topleftCoords.y, toprightCoords.y)}px`;
+                const newCoords = this.calculateCurrentCoords();
+                
+                this.div.style.left = `${newCoords.left}px`;
+                this.div.style.top = `${newCoords.top}px`;
+                this.div.style.width = `${newCoords.width}px`;
+                this.div.style.height = `${newCoords.height}px`;
             }
         }
 
@@ -140,6 +128,32 @@ function initOverlay(map) {
             if (this.div) {
                 this.div.parentNode.removeChild(this.div);
                 delete this.div;
+            }
+        }
+
+        calculateCurrentCoords() {
+            const currentPov = this.getMap().getPov();
+
+            const topleftCoords = this.getPointOnScreen(this.topleftTheta, this.topleftPhi, currentPov.heading, currentPov.pitch);
+            const toprightCoords = this.getPointOnScreen(this.toprightTheta, this.toprightPhi, currentPov.heading, currentPov.pitch);
+            const bottomrightCoords = this.getPointOnScreen(this.bottomrightTheta, this.bottomrightPhi, currentPov.heading, currentPov.pitch);
+            const bottomleftCoords = this.getPointOnScreen(this.bottomleftTheta, this.bottomleftPhi, currentPov.heading, currentPov.pitch);
+            
+            const xCoords = [topleftCoords.x, toprightCoords.x, bottomleftCoords.x, bottomrightCoords.x];
+            const yCoords = [topleftCoords.y, toprightCoords.y, bottomleftCoords.y, bottomrightCoords.y];
+            
+            console.log(xCoords);
+            console.log(yCoords);
+
+            xCoords.sort((x, y) => x - y);
+            yCoords.sort((x, y) => x - y);
+
+            // this might need to be adjusted
+            return {
+                left: (xCoords[0] + xCoords[1]) / 2,
+                top: (yCoords[0] + yCoords[1]) / 2,
+                width: (xCoords[3] + xCoords[2]) / 1.5 - (xCoords[0] + xCoords[1]) / 1.5,
+                height: yCoords[3] - yCoords[0]
             }
         }
 
