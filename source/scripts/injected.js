@@ -2,6 +2,10 @@ var pov;
 var first_pov = false;
 
 function handlePositionChanged(panorama) {
+    clearBoundingBoxes();
+}
+
+function clearBoundingBoxes() {
     document.querySelectorAll('[class*="boundingBox"]').forEach(el => el.remove());
 }
 
@@ -72,30 +76,30 @@ function initOverlay(map) {
         }
 
         onAdd() {
-            const precision = 40;
+            // possibly make this limit dependent on the width of the rectnagle
+            const limit = 0.2
 
-            // this is supposed to prevent duplicating of images
             const className = `boundingBox${this.cls}`;
-            const currentCoords = this.calculateCurrentCoords();
-            const centerX = currentCoords.Left + currentCoords.width / 2;
-            const centerY = currentCoords.top + currentCoords.height / 2;
             const boundingBoxes = document.getElementsByClassName(className);
-            if(boundingBoxes.length > 0) {
-                delete this;
-                return;
-            }
             for(let i = 0; i < boundingBoxes.length; i++) {
-                const left = this.parsePxString(boundingBoxes[i].style.left);
-                const top = this.parsePxString(boundingBoxes[i].style.top);
-                const width = this.parsePxString(boundingBoxes[i].style.width);
-                const height = this.parsePxString(boundingBoxes[i].style.height);
-                
-                const currCenterX = left + width / 2;
-                const currCenterY = top + height / 2;
+                let maxThetaDiff = 0, maxPhiDiff = 0;
+                maxThetaDiff = Math.max(maxThetaDiff, Math.abs(boundingBoxes[i].dataset.topleftTheta - this.topleftTheta));
+                maxThetaDiff = Math.max(maxThetaDiff, Math.abs(boundingBoxes[i].dataset.toprightTheta - this.toprightTheta));
+                maxThetaDiff = Math.max(maxThetaDiff, Math.abs(boundingBoxes[i].dataset.bottomleftTheta - this.bottomleftTheta));
+                maxThetaDiff = Math.max(maxThetaDiff, Math.abs(boundingBoxes[i].dataset.bottomrightTheta - this.bottomrightTheta));
 
-                if(Math.abs(centerX - currCenterX) < precision && Math.abs(centerY - currCenterY) < precision) {
+                maxPhiDiff = Math.max(maxPhiDiff, Math.abs(boundingBoxes[i].dataset.topleftPhi - this.topleftPhi));
+                maxPhiDiff = Math.max(maxPhiDiff, Math.abs(boundingBoxes[i].dataset.toprightPhi - this.toprightPhi));
+                maxPhiDiff = Math.max(maxPhiDiff, Math.abs(boundingBoxes[i].dataset.bottomleftPhi - this.bottomleftPhi));
+                maxPhiDiff = Math.max(maxPhiDiff, Math.abs(boundingBoxes[i].dataset.bottomrightPhi - this.bottomrightPhi));
+
+                if(maxThetaDiff <= limit && maxPhiDiff <= limit) {
                     delete this;
                     return;
+                }  
+                else {
+                    console.log(maxThetaDiff);
+                    console.log(maxPhiDiff);
                 }
             }
 
@@ -106,6 +110,15 @@ function initOverlay(map) {
             this.div.style.borderWidth = "3px";
             this.div.style.position = "absolute";
             
+            this.div.dataset.topleftTheta = this.topleftTheta;
+            this.div.dataset.topleftPhi = this.topleftPhi;
+            this.div.dataset.toprightTheta = this.toprightTheta;
+            this.div.dataset.toprightPhi = this.toprightPhi;
+            this.div.dataset.bottomleftTheta = this.bottomleftTheta;
+            this.div.dataset.bottomleftPhi = this.bottomleftPhi;
+            this.div.dataset.bottomrightTheta = this.bottomrightTheta;
+            this.div.dataset.bottomrightPhi = this.bottomrightPhi;
+
             const panes = this.getPanes();
             panes.overlayLayer.appendChild(this.div);
         }
@@ -114,6 +127,7 @@ function initOverlay(map) {
             // calculate new position according to current pitch and heading
             this.refreshCanvasSize();
             if (this.div) {
+                console.log(this.div.style.visibility);
 
                 const newCoords = this.calculateCurrentCoords();
                 
