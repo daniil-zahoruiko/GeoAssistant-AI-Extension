@@ -183,7 +183,7 @@ async function updateObjects(tabId) {
                 })
                 .then((data) => data.json())
                 .then((boundingBoxes) => {
-                    chrome.tabs.sendMessage(tabId, { msg: "addBoundingBoxes", data: { 'boundingBoxes': boundingBoxes, 'pov': { heading: res[tabId].currentPov.heading, pitch: res[tabId].currentPov.pitch } } });
+                    chrome.tabs.sendMessage(tabId, { msg: "addBoundingBoxes", data: { 'boundingBoxes': boundingBoxes, 'pov': { heading: res[tabId].currentPov.heading, pitch: res[tabId].currentPov.pitch }, 'pano': res[tabId].pano } });
                     return Promise.resolve();
                 });
             }

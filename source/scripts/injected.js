@@ -127,10 +127,15 @@ function initOverlay(map) {
             // calculate new position according to current pitch and heading
             this.refreshCanvasSize();
             if (this.div) {
-                console.log(this.div.style.visibility);
+                const currentPov = this.getMap().getPov();
+                if(!this.isOnScreen(currentPov)) {
+                    this.div.style.visibility = 'hidden';
+                    return;
+                }
 
-                const newCoords = this.calculateCurrentCoords();
-                
+                const newCoords = this.calculateCurrentCoords(currentPov);
+
+                this.div.style.visibility = 'visible';
                 this.div.style.left = `${newCoords.left}px`;
                 this.div.style.top = `${newCoords.top}px`;
                 this.div.style.width = `${newCoords.width}px`;
@@ -145,8 +150,13 @@ function initOverlay(map) {
             }
         }
 
-        calculateCurrentCoords() {
-            const currentPov = this.getMap().getPov();
+        isOnScreen(currentPov) {
+            // TODO: implement checking whether the bounding box is within screen limits
+
+            return true;
+        }
+
+        calculateCurrentCoords(currentPov) {
 
             const topleftCoords = this.getPointOnScreen(this.topleftTheta, this.topleftPhi, currentPov.heading, currentPov.pitch);
             const toprightCoords = this.getPointOnScreen(this.toprightTheta, this.toprightPhi, currentPov.heading, currentPov.pitch);
@@ -156,15 +166,15 @@ function initOverlay(map) {
             const xCoords = [topleftCoords.x, toprightCoords.x, bottomleftCoords.x, bottomrightCoords.x];
             const yCoords = [topleftCoords.y, toprightCoords.y, bottomleftCoords.y, bottomrightCoords.y];
             
-            console.log(xCoords);
-            console.log(yCoords);
+            // console.log(xCoords);
+            // console.log(yCoords);
 
             xCoords.sort((x, y) => x - y);
             yCoords.sort((x, y) => x - y);
 
-            // this might need to be adjusted
+            // this needs to be adjusted, there's probably a couple of cases that we need to consider
             return {
-                left: (xCoords[0] + xCoords[1]) / 2,
+                left: xCoords[0],
                 top: (yCoords[0] + yCoords[1]) / 2,
                 width: (xCoords[3] + xCoords[2]) / 1.5 - (xCoords[0] + xCoords[1]) / 1.5,
                 height: yCoords[3] - yCoords[0]
@@ -202,7 +212,7 @@ function initOverlay(map) {
             // add pitch and heading to the angles
             const appliedPitchCoords = this.sphericalRotateX(theta, phi, pitch);
             theta = appliedPitchCoords.theta;
-            phi = (appliedPitchCoords.phi + heading) % (2 * Math.PI);
+            phi = (appliedPitchCoords.phi + heading + 2 * Math.PI) % (2 * Math.PI);
 
             return { theta: theta, phi: phi };
         }
@@ -228,6 +238,9 @@ function initOverlay(map) {
     window.addEventListener('addBoundingBoxes', (e) => {
         const boundingBoxesData = e.detail;
         const pov = boundingBoxesData.pov;
+        if(boundingBoxesData.pano != map.getPano()) {
+            return;
+        }
         for(let i = 0; i < boundingBoxesData.boundingBoxes.length; i++) {
             const boundingBox = boundingBoxesData.boundingBoxes[i];
             const overlay = new BoundingBoxOverlay(boundingBox.coords[0], boundingBox.coords[1], boundingBox.coords[2], boundingBox.coords[3], pov.heading, pov.pitch, boundingBox.cls);
