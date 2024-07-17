@@ -223,10 +223,6 @@ function initOverlay(map) {
             this.canvasWidth = canvas.offsetWidth;
             this.canvasHeight = canvas.offsetHeight;
         }
-
-        parsePxString(str) {
-            return parseFloat(str.substring(0, str.indexOf('px')));
-        }
     }
 
     window.addEventListener('addBoundingBoxes', (e) => {
