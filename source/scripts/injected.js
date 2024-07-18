@@ -39,6 +39,15 @@ function initStreetView() {
 }
 
 function initOverlay(map) {
+    class SpherePoint {
+        // we only have theta and phi here since r can be calculated as focal length, and in most cases we just need theta and phi
+        constructor(theta, phi) {
+            this.theta = theta;
+            this.phi = phi;
+        }
+    }
+
+    // TODO: change all uses of theta and phi to use the SpherePoint class (that is, get rid of all topleftTheta and topleftPhi and start using topleft.Theta and topleft.Phi)
     class BoundingBoxOverlay extends google.maps.OverlayView{
         topleftTheta;
         topleftPhi;
@@ -59,20 +68,26 @@ function initOverlay(map) {
             this.refreshCanvasSize();
 
             const topleftSphereCoords = this.pointToSphere(topleftx, toplefty, heading, pitch);
+            this.topleft = topleftSphereCoords;
             this.topleftTheta = topleftSphereCoords.theta;
             this.topleftPhi = topleftSphereCoords.phi;
 
             const toprightSphereCoords = this.pointToSphere(bottomrightx, toplefty, heading, pitch);
+            this.topright = toprightSphereCoords;
             this.toprightTheta = toprightSphereCoords.theta;
             this.toprightPhi = toprightSphereCoords.phi
 
             const bottomrightSphereCoords = this.pointToSphere(bottomrightx, bottomrighty, heading, pitch);
+            this.bottomright = bottomrightSphereCoords;
             this.bottomrightTheta = bottomrightSphereCoords.theta;
             this.bottomrightPhi = bottomrightSphereCoords.phi;
 
             const bottomleftSphereCoords = this.pointToSphere(topleftx, bottomrighty, heading, pitch);
+            this.bottomleft = bottomleftSphereCoords;
             this.bottomleftTheta = bottomleftSphereCoords.theta;
             this.bottomleftPhi = bottomleftSphereCoords.phi;
+
+            this.coords = [this.topleft, this.topright, this.bottomright, this.bottomleft];
         }
 
         onAdd() {
@@ -151,9 +166,50 @@ function initOverlay(map) {
         }
 
         isOnScreen(currentPov) {
-            // TODO: implement checking whether the bounding box is within screen limits
+            const screenTopleft = this.pointToSphere(0, 0, currentPov.heading, currentPov.pitch);
+            const screenTopright = this.pointToSphere(this.canvasWidth, 0, currentPov.heading, currentPov.pitch);
+            const screenBottomleft = this.pointToSphere(0, this.canvasHeight, currentPov.heading, currentPov.pitch);
+            const screenBottomright = this.pointToSphere(this.canvasWidth, this.canvasHeight, currentPov.heading, currentPov.pitch);
 
-            return true;
+            if(screenTopleft.phi > screenTopright.phi || screenTopleft.phi > screenBottomright.phi) {
+                screenTopleft.phi -= 2 * Math.PI;
+            }
+            if(screenBottomleft.phi > screenTopright.phi || screenBottomleft.phi > screenBottomright.phi) {
+                screenBottomleft.phi -= 2 * Math.PI;
+            }
+
+            const screenCoords = [screenTopleft, screenTopright, screenBottomright, screenBottomleft];
+            for(let i = 0; i < this.coords.length; i++) {
+                let inside = false;
+ 
+                let p1 = screenCoords[0];
+                let p2;
+                const theta = this.coords[i].theta;
+                const phi = this.coords[i].phi;
+                for(let j = 1; j <= screenCoords.length; j++) {
+                    p2 = screenCoords[j % screenCoords.length];
+
+                    if(theta > Math.min(p1.theta, p2.theta)) {
+                        if(theta <= Math.max(p1.theta, p2.theta)) {
+                            if(phi <= Math.max(p1.phi, p2.phi)) {
+                                const phi_intersection = ((theta - p1.theta) * (p2.phi - p1.phi)) / (p2.theta - p1.theta) + p1.phi;
+                                console.log(phi_intersection);
+                                if(phi <= phi_intersection) {
+                                    inside = !inside;
+                                }
+                            }
+                        }
+                    }
+
+                    p1 = p2;
+                }
+
+                if(inside) {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         calculateCurrentCoords(currentPov) {
@@ -214,7 +270,7 @@ function initOverlay(map) {
             theta = appliedPitchCoords.theta;
             phi = (appliedPitchCoords.phi + heading + 2 * Math.PI) % (2 * Math.PI);
 
-            return { theta: theta, phi: phi };
+            return new SpherePoint(theta, phi);
         }
 
         sphericalRotateX(theta, phi, alpha) {
