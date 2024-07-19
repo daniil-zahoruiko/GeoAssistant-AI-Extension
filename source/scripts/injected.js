@@ -57,6 +57,7 @@ function initOverlay(map) {
         canvasHeight;
         cls;
         div;
+        contSVG;
 
         constructor(topleftx, toplefty, bottomrightx, bottomrighty, heading, pitch, cls) {
             super();
@@ -105,7 +106,7 @@ function initOverlay(map) {
             this.div.style.borderColor = "red";
             this.div.style.borderWidth = "3px";
             this.div.style.position = "absolute";
-            
+
             this.div.dataset.topleftTheta = this.topleft.theta;
             this.div.dataset.topleftPhi = this.topleft.phi;
             this.div.dataset.toprightTheta = this.topright.theta;
@@ -115,8 +116,76 @@ function initOverlay(map) {
             this.div.dataset.bottomrightTheta = this.bottomright.theta;
             this.div.dataset.bottomrightPhi = this.bottomright.phi;
 
+
+            const svgNS = "http://www.w3.org/2000/svg";
+            const svg = document.createElementNS(svgNS, "svg");
+            svg.setAttribute("width", this.div.style.width);
+            svg.setAttribute("height", this.div.style.height);
+
+            // Create a circle element
+            const circle = document.createElementNS(svgNS, "circle");
+            circle.setAttribute("cx", "50%");
+            circle.setAttribute("cy", "50%");
+            circle.setAttribute("r", "10");
+            circle.setAttribute("stroke", "black");
+            circle.setAttribute("stroke-width", "2");
+            circle.setAttribute("fill", "red");
+
+            // Append the circle to the SVG
+            svg.appendChild(circle);
+
+            this.div.appendChild(svg); // previous version of the highlite area
+
+            // Create a highlite area
+            this.contSVG = document.createElementNS(svgNS, "svg");
+            this.contSVG.setAttribute("width", "100");
+            this.contSVG.setAttribute("height", "100");
+            this.contSVG.style.position = "absolute";
+
+            // Initialize the highlite area lines
+            const topLine = document.createElementNS(svgNS, 'line');
+            const bottomLine = document.createElementNS(svgNS, 'line');
+            const leftLine = document.createElementNS(svgNS, 'line');
+            const rightLine = document.createElementNS(svgNS, 'line');
+
+            topLine.setAttribute('x1', 0);
+            topLine.setAttribute('y1', 0);
+            topLine.setAttribute('x2', 0);
+            topLine.setAttribute('y2', 0);
+            topLine.setAttribute('stroke', 'red');
+            topLine.setAttribute('stroke-width', '2');
+
+            bottomLine.setAttribute('x1', 0);
+            bottomLine.setAttribute('y1', 0);
+            bottomLine.setAttribute('x2', 0);
+            bottomLine.setAttribute('y2', 0);
+            bottomLine.setAttribute('stroke', 'red');
+            bottomLine.setAttribute('stroke-width', '2');
+
+            leftLine.setAttribute('x1', 0);
+            leftLine.setAttribute('y1', 0);
+            leftLine.setAttribute('x2', 0);
+            leftLine.setAttribute('y2', 0);
+            leftLine.setAttribute('stroke', 'red');
+            leftLine.setAttribute('stroke-width', '2');
+
+            rightLine.setAttribute('x1', 0);
+            rightLine.setAttribute('y1', 0);
+            rightLine.setAttribute('x2', 0);
+            rightLine.setAttribute('y2', 0);
+            rightLine.setAttribute('stroke', 'red');
+            rightLine.setAttribute('stroke-width', '2');
+
+            // Append the lines to the SVG
+            this.contSVG.appendChild(topLine);
+            this.contSVG.appendChild(bottomLine);
+            this.contSVG.appendChild(leftLine);
+            this.contSVG.appendChild(rightLine);
+
+
             const panes = this.getPanes();
             panes.overlayLayer.appendChild(this.div);
+            panes.overlayLayer.appendChild(this.contSVG);
         }
 
         draw() {
@@ -126,16 +195,54 @@ function initOverlay(map) {
                 const currentPov = this.getMap().getPov();
                 if(!this.isOnScreen(currentPov)) {
                     this.div.style.visibility = 'hidden';
+                    this.contSVG.style.visibility = 'hidden';
                     return;
                 }
 
                 const newCoords = this.calculateCurrentCoords(currentPov);
 
-                this.div.style.visibility = 'visible';
+                const topleftCoords = this.getPointOnScreen(this.topleft.theta, this.topleft.phi, currentPov.heading, currentPov.pitch);
+                const toprightCoords = this.getPointOnScreen(this.topright.theta, this.topright.phi, currentPov.heading, currentPov.pitch);
+                const bottomrightCoords = this.getPointOnScreen(this.bottomright.theta, this.bottomright.phi, currentPov.heading, currentPov.pitch);
+                const bottomleftCoords = this.getPointOnScreen(this.bottomleft.theta, this.bottomleft.phi, currentPov.heading, currentPov.pitch);
+
+                this.div.style.visibility = 'hidden'; // hide previous version of the highlite area
+                this.contSVG.style.visibility = 'visible';
                 this.div.style.left = `${newCoords.left}px`;
                 this.div.style.top = `${newCoords.top}px`;
                 this.div.style.width = `${newCoords.width}px`;
                 this.div.style.height = `${newCoords.height}px`;
+                this.contSVG.style.left = `${newCoords.left}px`;
+                this.contSVG.style.top = `${newCoords.top}px`;
+
+                this.contSVG.setAttribute("width", newCoords.width);
+                this.contSVG.setAttribute("height", newCoords.height);
+
+                const origin = {x: topleftCoords.x - newCoords.left + 1, y: topleftCoords.y - newCoords.top + 1};
+                const topRight = {x: toprightCoords.x - newCoords.left - 1, y: toprightCoords.y - newCoords.top + 1};
+                const bottomRight = {x: bottomrightCoords.x - newCoords.left - 1, y: bottomrightCoords.y - newCoords.top - 1};
+                const bottomLeft = {x: bottomleftCoords.x - newCoords.left + 1, y: bottomleftCoords.y - newCoords.top - 1};
+
+                this.contSVG.children[0].setAttribute('x1', origin.x);
+                this.contSVG.children[0].setAttribute('y1', origin.y);
+                this.contSVG.children[0].setAttribute('x2', topRight.x);
+                this.contSVG.children[0].setAttribute('y2', topRight.y);
+
+
+                this.contSVG.children[1].setAttribute('x1', bottomLeft.x);
+                this.contSVG.children[1].setAttribute('y1', bottomLeft.y);
+                this.contSVG.children[1].setAttribute('x2', bottomRight.x);
+                this.contSVG.children[1].setAttribute('y2', bottomRight.y);
+
+                this.contSVG.children[2].setAttribute('x1', origin.x);
+                this.contSVG.children[2].setAttribute('y1', origin.y);
+                this.contSVG.children[2].setAttribute('x2', bottomLeft.x);
+                this.contSVG.children[2].setAttribute('y2', bottomLeft.y);
+
+                this.contSVG.children[3].setAttribute('x1', bottomRight.x);
+                this.contSVG.children[3].setAttribute('y1', bottomRight.y);
+                this.contSVG.children[3].setAttribute('x2', topRight.x);
+                this.contSVG.children[3].setAttribute('y2', topRight.y);
             }
         }
 
@@ -218,6 +325,7 @@ function initOverlay(map) {
             }
         }
 
+        // Convert spherical coordinates to screen coordinates
         getPointOnScreen(theta, phi, heading, pitch) {
             heading = this.toRadian(heading);
             pitch = this.toRadian(90 - pitch);
@@ -233,6 +341,7 @@ function initOverlay(map) {
             };
         }
 
+        // Convert screen coordinates to spherical coordinates
         pointToSphere(x, y, heading, pitch) {
             x -= this.canvasWidth / 2;
             y = this.canvasHeight / 2 - y;
@@ -261,6 +370,7 @@ function initOverlay(map) {
             );
         }
 
+        // Convert degrees to radians
         toRadian(degree) {
             return degree * Math.PI / 180;
         }
