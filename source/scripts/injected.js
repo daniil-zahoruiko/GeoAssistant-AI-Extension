@@ -49,14 +49,10 @@ function initOverlay(map) {
 
     // TODO: change all uses of theta and phi to use the SpherePoint class (that is, get rid of all topleftTheta and topleftPhi and start using topleft.Theta and topleft.Phi)
     class BoundingBoxOverlay extends google.maps.OverlayView{
-        topleftTheta;
-        topleftPhi;
-        bottomrightTheta;
-        bottomrightPhi;
-        toprightTheta;
-        toprightPhi;
-        bottomleftTheta;
-        bottomleftPhi;
+        topleft;
+        topright;
+        bottomleft;
+        bottomright;
         canvasWidth;
         canvasHeight;
         cls;
@@ -67,25 +63,10 @@ function initOverlay(map) {
             this.cls = cls;
             this.refreshCanvasSize();
 
-            const topleftSphereCoords = this.pointToSphere(topleftx, toplefty, heading, pitch);
-            this.topleft = topleftSphereCoords;
-            this.topleftTheta = topleftSphereCoords.theta;
-            this.topleftPhi = topleftSphereCoords.phi;
-
-            const toprightSphereCoords = this.pointToSphere(bottomrightx, toplefty, heading, pitch);
-            this.topright = toprightSphereCoords;
-            this.toprightTheta = toprightSphereCoords.theta;
-            this.toprightPhi = toprightSphereCoords.phi
-
-            const bottomrightSphereCoords = this.pointToSphere(bottomrightx, bottomrighty, heading, pitch);
-            this.bottomright = bottomrightSphereCoords;
-            this.bottomrightTheta = bottomrightSphereCoords.theta;
-            this.bottomrightPhi = bottomrightSphereCoords.phi;
-
-            const bottomleftSphereCoords = this.pointToSphere(topleftx, bottomrighty, heading, pitch);
-            this.bottomleft = bottomleftSphereCoords;
-            this.bottomleftTheta = bottomleftSphereCoords.theta;
-            this.bottomleftPhi = bottomleftSphereCoords.phi;
+            this.topleft = this.pointToSphere(topleftx, toplefty, heading, pitch);
+            this.topright = this.pointToSphere(bottomrightx, toplefty, heading, pitch);
+            this.bottomright = this.pointToSphere(bottomrightx, bottomrighty, heading, pitch);
+            this.bottomleft = this.pointToSphere(topleftx, bottomrighty, heading, pitch);
 
             this.coords = [this.topleft, this.topright, this.bottomright, this.bottomleft];
         }
@@ -98,15 +79,15 @@ function initOverlay(map) {
             const boundingBoxes = document.getElementsByClassName(className);
             for(let i = 0; i < boundingBoxes.length; i++) {
                 let maxThetaDiff = 0, maxPhiDiff = 0;
-                maxThetaDiff = Math.max(maxThetaDiff, Math.abs(boundingBoxes[i].dataset.topleftTheta - this.topleftTheta));
-                maxThetaDiff = Math.max(maxThetaDiff, Math.abs(boundingBoxes[i].dataset.toprightTheta - this.toprightTheta));
-                maxThetaDiff = Math.max(maxThetaDiff, Math.abs(boundingBoxes[i].dataset.bottomleftTheta - this.bottomleftTheta));
-                maxThetaDiff = Math.max(maxThetaDiff, Math.abs(boundingBoxes[i].dataset.bottomrightTheta - this.bottomrightTheta));
+                maxThetaDiff = Math.max(maxThetaDiff, Math.abs(boundingBoxes[i].dataset.topleftTheta - this.topleft.theta));
+                maxThetaDiff = Math.max(maxThetaDiff, Math.abs(boundingBoxes[i].dataset.toprightTheta - this.topright.theta));
+                maxThetaDiff = Math.max(maxThetaDiff, Math.abs(boundingBoxes[i].dataset.bottomleftTheta - this.bottomleft.theta));
+                maxThetaDiff = Math.max(maxThetaDiff, Math.abs(boundingBoxes[i].dataset.bottomrightTheta - this.bottomright.theta));
 
-                maxPhiDiff = Math.max(maxPhiDiff, Math.abs(boundingBoxes[i].dataset.topleftPhi - this.topleftPhi));
-                maxPhiDiff = Math.max(maxPhiDiff, Math.abs(boundingBoxes[i].dataset.toprightPhi - this.toprightPhi));
-                maxPhiDiff = Math.max(maxPhiDiff, Math.abs(boundingBoxes[i].dataset.bottomleftPhi - this.bottomleftPhi));
-                maxPhiDiff = Math.max(maxPhiDiff, Math.abs(boundingBoxes[i].dataset.bottomrightPhi - this.bottomrightPhi));
+                maxPhiDiff = Math.max(maxPhiDiff, Math.abs(boundingBoxes[i].dataset.topleftPhi - this.topleft.phi));
+                maxPhiDiff = Math.max(maxPhiDiff, Math.abs(boundingBoxes[i].dataset.toprightPhi - this.topright.phi));
+                maxPhiDiff = Math.max(maxPhiDiff, Math.abs(boundingBoxes[i].dataset.bottomleftPhi - this.bottomleft.phi));
+                maxPhiDiff = Math.max(maxPhiDiff, Math.abs(boundingBoxes[i].dataset.bottomrightPhi - this.bottomright.phi));
 
                 if(maxThetaDiff <= limit && maxPhiDiff <= limit) {
                     delete this;
@@ -125,14 +106,14 @@ function initOverlay(map) {
             this.div.style.borderWidth = "3px";
             this.div.style.position = "absolute";
             
-            this.div.dataset.topleftTheta = this.topleftTheta;
-            this.div.dataset.topleftPhi = this.topleftPhi;
-            this.div.dataset.toprightTheta = this.toprightTheta;
-            this.div.dataset.toprightPhi = this.toprightPhi;
-            this.div.dataset.bottomleftTheta = this.bottomleftTheta;
-            this.div.dataset.bottomleftPhi = this.bottomleftPhi;
-            this.div.dataset.bottomrightTheta = this.bottomrightTheta;
-            this.div.dataset.bottomrightPhi = this.bottomrightPhi;
+            this.div.dataset.topleftTheta = this.topleft.theta;
+            this.div.dataset.topleftPhi = this.topleft.phi;
+            this.div.dataset.toprightTheta = this.topright.theta;
+            this.div.dataset.toprightPhi = this.topright.phi;
+            this.div.dataset.bottomleftTheta = this.bottomleft.theta;
+            this.div.dataset.bottomleftPhi = this.bottomleft.phi;
+            this.div.dataset.bottomrightTheta = this.bottomright.theta;
+            this.div.dataset.bottomrightPhi = this.bottomright.phi;
 
             const panes = this.getPanes();
             panes.overlayLayer.appendChild(this.div);
@@ -214,10 +195,10 @@ function initOverlay(map) {
 
         calculateCurrentCoords(currentPov) {
 
-            const topleftCoords = this.getPointOnScreen(this.topleftTheta, this.topleftPhi, currentPov.heading, currentPov.pitch);
-            const toprightCoords = this.getPointOnScreen(this.toprightTheta, this.toprightPhi, currentPov.heading, currentPov.pitch);
-            const bottomrightCoords = this.getPointOnScreen(this.bottomrightTheta, this.bottomrightPhi, currentPov.heading, currentPov.pitch);
-            const bottomleftCoords = this.getPointOnScreen(this.bottomleftTheta, this.bottomleftPhi, currentPov.heading, currentPov.pitch);
+            const topleftCoords = this.getPointOnScreen(this.topleft.theta, this.topleft.phi, currentPov.heading, currentPov.pitch);
+            const toprightCoords = this.getPointOnScreen(this.topright.theta, this.topright.phi, currentPov.heading, currentPov.pitch);
+            const bottomrightCoords = this.getPointOnScreen(this.bottomright.theta, this.bottomright.phi, currentPov.heading, currentPov.pitch);
+            const bottomleftCoords = this.getPointOnScreen(this.bottomleft.theta, this.bottomleft.phi, currentPov.heading, currentPov.pitch);
             
             const xCoords = [topleftCoords.x, toprightCoords.x, bottomleftCoords.x, bottomrightCoords.x];
             const yCoords = [topleftCoords.y, toprightCoords.y, bottomleftCoords.y, bottomrightCoords.y];
@@ -274,10 +255,10 @@ function initOverlay(map) {
         }
 
         sphericalRotateX(theta, phi, alpha) {
-            return {
-                theta: Math.acos(Math.sin(theta) * Math.sin(phi) * Math.sin(alpha) + Math.cos(theta) * Math.cos(alpha)),
-                phi: Math.atan2(Math.sin(theta) * Math.sin(phi) * Math.cos(alpha) - Math.cos(theta) * Math.sin(alpha), Math.sin(theta) * Math.cos(phi))
-            };
+            return new SpherePoint(
+                Math.acos(Math.sin(theta) * Math.sin(phi) * Math.sin(alpha) + Math.cos(theta) * Math.cos(alpha)),
+                Math.atan2(Math.sin(theta) * Math.sin(phi) * Math.cos(alpha) - Math.cos(theta) * Math.sin(alpha), Math.sin(theta) * Math.cos(phi))
+            );
         }
 
         toRadian(degree) {
