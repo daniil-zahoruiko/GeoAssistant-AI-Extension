@@ -1,12 +1,37 @@
 var pov;
 var first_pov = false;
 
-function handlePositionChanged(panorama) {
+HTMLCanvasElement.prototype.getContext = function(origFn) {
+    return function(type, attribs) {
+      attribs = attribs || {};
+      attribs.preserveDrawingBuffer = true;
+      return origFn.call(this, type, attribs);
+    };
+}(HTMLCanvasElement.prototype.getContext);
+
+function handlePanoChanged(panorama) {
     clearBoundingBoxes();
+    updateBoundingBoxes();
 }
 
 function clearBoundingBoxes() {
     document.querySelectorAll('[class*="boundingBox"]').forEach(el => el.remove());
+}
+
+async function updateBoundingBoxes()
+{
+    HiddenPanoramaManager.setPano(ActivePanoramaManager.getPanorama().getPano());
+    // wait for the new location to load
+    await new Promise(r => setTimeout(r, 500));
+    const data = await HiddenPanoramaManager.getImageData();
+    if(data !== null) {
+        console.log(data);
+        fetch("http://127.0.0.1:5000/update", {
+            method: "POST",
+            mode: "cors",
+            body: data
+        });
+    }
 }
 
 function handlePovChanged(panorama) {
@@ -31,8 +56,10 @@ function initStreetView() {
         constructor(...args) {
             super(...args);
 
-            initOverlay(this);
-            this.addListener('position_changed', () => handlePositionChanged(this));
+            ActivePanoramaManager.initialize(this);
+
+            // initOverlay(this);
+            this.addListener('pano_changed', () => handlePanoChanged(this));
             this.addListener('pov_changed', () => handlePovChanged(this));
         }
     }
@@ -182,10 +209,27 @@ function initOverlay(map) {
             this.contSVG.appendChild(leftLine);
             this.contSVG.appendChild(rightLine);
 
+            // test
+            this.topleftEl = document.createElement('p');
+            this.topleftEl.innerText = "Top Left";
+            this.topleftEl.style.position = "absolute";
+            this.toprightEl = document.createElement('p');
+            this.toprightEl.innerText = "Top Right";
+            this.toprightEl.style.position = "absolute";
+            this.bottomleftEl = document.createElement('p');
+            this.bottomleftEl.innerText = "Bottom Left";
+            this.bottomleftEl.style.position = "absolute";
+            this.bottomrightEl = document.createElement('p');
+            this.bottomrightEl.innerText = "Bottom Right";
+            this.bottomrightEl.style.position = "absolute";
 
             const panes = this.getPanes();
             panes.overlayLayer.appendChild(this.div);
             panes.overlayLayer.appendChild(this.contSVG);
+            panes.overlayLayer.appendChild(this.topleftEl);
+            panes.overlayLayer.appendChild(this.toprightEl);
+            panes.overlayLayer.appendChild(this.bottomleftEl);
+            panes.overlayLayer.appendChild(this.bottomrightEl);
         }
 
         draw() {
@@ -205,6 +249,15 @@ function initOverlay(map) {
                 const toprightCoords = this.getPointOnScreen(this.topright.theta, this.topright.phi, currentPov.heading, currentPov.pitch);
                 const bottomrightCoords = this.getPointOnScreen(this.bottomright.theta, this.bottomright.phi, currentPov.heading, currentPov.pitch);
                 const bottomleftCoords = this.getPointOnScreen(this.bottomleft.theta, this.bottomleft.phi, currentPov.heading, currentPov.pitch);
+
+                this.topleftEl.style.left = `${topleftCoords.x}px`;
+                this.topleftEl.style.top = `${topleftCoords.y}px`;
+                this.toprightEl.style.left = `${toprightCoords.x}px`;
+                this.toprightEl.style.top = `${toprightCoords.y}px`;
+                this.bottomleftEl.style.left = `${bottomleftCoords.x}px`;
+                this.bottomleftEl.style.top = `${bottomleftCoords.y}px`;
+                this.bottomrightEl.style.left = `${bottomrightCoords.x}px`;
+                this.bottomrightEl.style.top = `${bottomrightCoords.y}px`;
 
                 this.div.style.visibility = 'hidden'; // hide previous version of the highlite area
                 this.contSVG.style.visibility = 'visible';
@@ -319,8 +372,8 @@ function initOverlay(map) {
             // this needs to be adjusted, there's probably a couple of cases that we need to consider
             return {
                 left: xCoords[0],
-                top: (yCoords[0] + yCoords[1]) / 2,
-                width: (xCoords[3] + xCoords[2]) / 1.5 - (xCoords[0] + xCoords[1]) / 1.5,
+                top: yCoords[0],
+                width: xCoords[3] - xCoords[0],
                 height: yCoords[3] - yCoords[0]
             }
         }
@@ -396,13 +449,125 @@ function initOverlay(map) {
     });
 }
 
+const ActivePanoramaManager = (function() {
+    let panorama = null;
+
+    return {
+        initialize: function(p) {
+            panorama = p;
+        },
+
+        getPanorama: function() {
+            return panorama;
+        }
+    }
+})();
+
+const HiddenPanoramaManager = (function() {
+    let panorama = null;
+    let panoramaContainer = null;
+
+    function getCanvasElement() {
+        if(panoramaContainer) {
+            return panoramaContainer.querySelectorAll('.mapsConsumerUiSceneCoreScene__canvas')[0];
+        }
+    }
+    return {
+        initialize: function() {
+            const copyDiv = document.createElement('div');
+            copyDiv.id = 'copyDiv';
+            copyDiv.style.position = 'absolute';
+            copyDiv.style.top = '0px';
+            copyDiv.style.width = '1920px';
+            copyDiv.style.height = '960px';
+            copyDiv.style.zIndex = '-10';
+            document.body.appendChild(copyDiv);
+
+            panoramaContainer = copyDiv;
+            panorama = new google.maps.StreetViewPanorama(document.getElementById('copyDiv'), {
+                showRoadLabels: false
+            });
+        },
+
+        getCanvasElement: function() {
+            return getCanvasElement();
+        },
+
+        getImageData: async function() {
+            const povs = [
+                { heading: 0, pitch: -89, zoom: 0},
+                { heading: 0, pitch: 0, zoom: 0},
+                { heading: 120, pitch: 0, zoom: 0},
+                { heading: 240, pitch: 0, zoom: 0}
+            ];
+
+            function dataURLtoBlob(dataURL) {
+                let array, binary, i, len;
+                binary = atob(dataURL.split(',')[1]);
+                array = [];
+                i = 0;
+                len = binary.length;
+                while (i < len) {
+                    array.push(binary.charCodeAt(i));
+                    i++;
+                }
+                return new Blob([new Uint8Array(array)], {
+                    type: 'image/png'
+                });
+            }
+
+            const canvas = getCanvasElement();
+            if(canvas) {
+                const imageData = new FormData();
+                for(let i = 0; i < povs.length; i++) {
+                    panorama.setPov(povs[i]);
+                    // this is to make sure the pov actually updates
+                    await new Promise(r => setTimeout(r, 500));
+                    const dataUrl = await canvas.toDataURL();
+                    imageData.append('data' + i, dataURLtoBlob(dataUrl));
+                };
+                return imageData;
+            }   
+            
+            return null;
+        },
+
+        setPano: function (pano) {
+            panorama.setPano(pano);
+        },
+    }
+})();
+
 (function () {
+    const loadingObserver = new MutationObserver(function() {
+        const loadingScreen = document.getElementsByClassName('fullscreen-spinner_root__gtDP1')
+
+        if(loadingScreen.length === 0) {
+            this.disconnect();
+            updateBoundingBoxes(ActivePanoramaManager.getPanorama());
+        }
+    });
+
+    new MutationObserver(function() {
+        const loadingScreen = document.getElementsByClassName('fullscreen-spinner_root__gtDP1')
+
+        if(loadingScreen.length === 1) {
+            this.disconnect();
+            loadingObserver.observe(document.body, {childList: true, subtree: true});
+        }
+    }).observe(document.body, { childList: true, subtree: true });
+
     new MutationObserver(function() {
         let script = document.querySelector("[src*='maps.googleapis.com/maps/api']");
 
         if (script) {
             this.disconnect();
-            script.onload = () => initStreetView();
+            script.onload = () => { 
+                HiddenPanoramaManager.initialize();
+                initStreetView();
+            };
+
+
         }
     }).observe(document.head, {childList: true, subtree: true});
 })();

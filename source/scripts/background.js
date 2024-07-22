@@ -177,7 +177,7 @@ async function updateObjects(tabId) {
             console.log(res);
             if(res[tabId] != null) {
                 const url = "http://127.0.0.1:5000/objects?";
-                return fetch(url + defaultURLSearchParams(res[tabId]), {
+                /*return fetch(url + defaultURLSearchParams(res[tabId]), {
                     method: "GET",
                     mode: 'cors'
                 })
@@ -185,7 +185,7 @@ async function updateObjects(tabId) {
                 .then((boundingBoxes) => {
                     chrome.tabs.sendMessage(tabId, { msg: "addBoundingBoxes", data: { 'boundingBoxes': boundingBoxes, 'pov': { heading: res[tabId].currentPov.heading, pitch: res[tabId].currentPov.pitch }, 'pano': res[tabId].pano } });
                     return Promise.resolve();
-                });
+                });*/
             }
             else {
                 return Promise.resolve();
