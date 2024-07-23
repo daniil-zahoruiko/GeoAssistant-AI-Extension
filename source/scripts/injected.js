@@ -9,9 +9,74 @@ HTMLCanvasElement.prototype.getContext = function(origFn) {
     };
 }(HTMLCanvasElement.prototype.getContext);
 
+// Disable scrolling
+document.body.style.overflow = 'hidden';
+
+const toggleWrapper = document.createElement('div');
+toggleWrapper.style.position = 'absolute';
+toggleWrapper.style.bottom = '17rem';
+toggleWrapper.style.left = '1.5rem';
+toggleWrapper.style.zIndex = '10';
+toggleWrapper.style.display = 'flex';
+toggleWrapper.style.flexDirection = 'column';
+toggleWrapper.style.gap = '1rem';
+toggleWrapper.style.visibility = 'hidden';
+
+function displayToggles() {
+    toggleWrapper.style.visibility = 'visible';
+}
+
+function hideToggles() {
+    toggleWrapper.style.visibility = 'hidden';
+}
+
+// Create a 360 button
+const scan360Button = document.createElement('button');
+scan360Button.innerText = 'Scan 360°';
+scan360Button.style.background = "linear-gradient(180deg, rgba(161, 155, 217, 0.6) 0%, rgba(161, 155, 217, 0) 50%, rgba(161, 155, 217, 0) 50%), rgba(86, 59, 154, 0.8)";
+scan360Button.style.color = "white";
+scan360Button.style.borderRadius = "1rem";
+scan360Button.style.padding = "1rem 2rem";
+scan360Button.style.transition = "background 0.3s";
+
+scan360Button.addEventListener('click', () => {
+    updateBoundingBoxes();
+});
+
+scan360Button.addEventListener('mouseover', () => {
+    scan360Button.style.background = "linear-gradient(180deg, rgba(161, 155, 217, 0.6) 0%, rgba(161, 155, 217, 0) 50%, rgba(161, 155, 217, 0) 50%), rgba(86, 59, 154, 1)";
+});
+
+scan360Button.addEventListener('mouseout', () => {
+    scan360Button.style.background = "linear-gradient(180deg, rgba(161, 155, 217, 0.6) 0%, rgba(161, 155, 217, 0) 50%, rgba(161, 155, 217, 0) 50%), rgba(86, 59, 154, 0.8)";
+});
+
+// Create a current pov button
+const currentPOVButton = document.createElement('button');
+currentPOVButton.innerText = 'Scan visible area';
+currentPOVButton.style.background = "linear-gradient(180deg, rgba(161, 155, 217, 0.6) 0%, rgba(161, 155, 217, 0) 50%, rgba(161, 155, 217, 0) 50%), rgba(86, 59, 154, 0.8)";
+currentPOVButton.style.color = "white";
+currentPOVButton.style.borderRadius = "1rem";
+currentPOVButton.style.padding = "1rem 2rem";
+currentPOVButton.style.transition = "background 0.3s";
+
+currentPOVButton.addEventListener('mouseover', () => {
+    currentPOVButton.style.background = "linear-gradient(180deg, rgba(161, 155, 217, 0.6) 0%, rgba(161, 155, 217, 0) 50%, rgba(161, 155, 217, 0) 50%), rgba(86, 59, 154, 1)";
+});
+
+currentPOVButton.addEventListener('mouseout', () => {
+    currentPOVButton.style.background = "linear-gradient(180deg, rgba(161, 155, 217, 0.6) 0%, rgba(161, 155, 217, 0) 50%, rgba(161, 155, 217, 0) 50%), rgba(86, 59, 154, 0.8)";
+});
+
+
+toggleWrapper.appendChild(scan360Button);
+toggleWrapper.appendChild(currentPOVButton);
+
+document.body.appendChild(toggleWrapper);
+
 function handlePanoChanged(panorama) {
     clearBoundingBoxes();
-    updateBoundingBoxes();
+    // updateBoundingBoxes();
 }
 
 function clearBoundingBoxes() {
@@ -50,6 +115,8 @@ window.addEventListener('fetchOriginPOV', (e) => {
         window.dispatchEvent(new CustomEvent('sendOriginPOV', {detail: data.tiles}));
     })
 });
+
+// window.addEventListener('resize', (e) => {console.log(window.innerWidth, window.innerHeight)});
 
 function initStreetView() {
     google.maps.StreetViewPanorama = class extends google.maps.StreetViewPanorama {
@@ -527,8 +594,7 @@ const HiddenPanoramaManager = (function() {
                     imageData.append('data' + i, dataURLtoBlob(dataUrl));
                 };
                 return imageData;
-            }   
-            
+            }
             return null;
         },
 
@@ -544,7 +610,8 @@ const HiddenPanoramaManager = (function() {
 
         if(loadingScreen.length === 0) {
             this.disconnect();
-            updateBoundingBoxes(ActivePanoramaManager.getPanorama());
+            // updateBoundingBoxes(ActivePanoramaManager.getPanorama());
+            displayToggles();
         }
     });
 
@@ -554,6 +621,7 @@ const HiddenPanoramaManager = (function() {
         if(loadingScreen.length === 1) {
             this.disconnect();
             loadingObserver.observe(document.body, {childList: true, subtree: true});
+            hideToggles();
         }
     }).observe(document.body, { childList: true, subtree: true });
 
@@ -562,7 +630,7 @@ const HiddenPanoramaManager = (function() {
 
         if (script) {
             this.disconnect();
-            script.onload = () => { 
+            script.onload = () => {
                 HiddenPanoramaManager.initialize();
                 initStreetView();
             };
