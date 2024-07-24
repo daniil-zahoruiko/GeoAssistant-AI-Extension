@@ -8,7 +8,7 @@
  	"description": "Extracts image from a street view in GeoGuessr",
 	"web_accessible_resources": [{
 		"matches": ["https://www.geoguessr.com/*"],
-		"resources": ["scripts/injected.js"]
+		"resources": ["scripts/injected.js", "images/logo.svg"]
 	}, 
 	{ 
 		"matches": ["<all_urls>"],
