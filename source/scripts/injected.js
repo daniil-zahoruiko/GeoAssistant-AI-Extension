@@ -583,24 +583,35 @@ const HiddenPanoramaManager = (function() {
     }
 })();
 
+
+let logo = null;
+
+// Listen for the SVG content
+window.addEventListener('message', function(event) {
+    if (event.data && event.data.type === 'SEND_SVG') {
+        logo = document.createElement('div');
+        logo.innerHTML = event.data.svgContent;
+    }
+});
+
 const UIManager = (function() {
     let toggleWrapper = null;
 
     function createLogo() {
         // Create a logo
-        const logo = document.createElement('p');
-        logo.innerText = 'GeoAssistant AI';
-        logo.style.color = 'white';
-        logo.style.fontSize = '1.5rem';
-        logo.style.fontFamily = 'League Spartan, sans-serif';
-        logo.style.fontWeight = '600';
-        logo.style.fontStyle = 'normal';
-        logo.style.textAlign = 'center';
-        logo.style.textShadow = "0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154),"
-        + "0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154),"
-        + "0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154),"
-        + "0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154),"
-        + "0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154)";
+        // const logo = document.createElement('p');
+        // logo.innerText = 'GeoAssistant AI';
+        // logo.style.color = 'white';
+        // logo.style.fontSize = '1.5rem';
+        // logo.style.fontFamily = 'League Spartan, sans-serif';
+        // logo.style.fontWeight = '600';
+        // logo.style.fontStyle = 'normal';
+        // logo.style.textAlign = 'center';
+        // logo.style.textShadow = "0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154),"
+        // + "0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154),"
+        // + "0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154),"
+        // + "0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154),"
+        // + "0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154)";
 
         return logo;
     }
@@ -719,6 +730,9 @@ const UIManager = (function() {
     //         UIManager.hideToggles();
     //     }
     // }).observe(document.body, { childList: true, subtree: true });
+
+    // Request SVG content from content_script.js
+    window.postMessage({ type: 'REQUEST_SVG' }, '*');
 
     // Disable scrolling
     document.documentElement.style.overflow = 'hidden';
