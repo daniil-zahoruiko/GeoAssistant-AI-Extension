@@ -568,7 +568,7 @@ const HiddenPanoramaManager = (function() {
                 const result = new FormData();
                 const dataUrl = await canvas.toDataURL();
                 result.append('data', dataURLtoBlob(dataUrl));
-                
+
                 return result;
             }
 
@@ -585,6 +585,25 @@ const HiddenPanoramaManager = (function() {
 
 const UIManager = (function() {
     let toggleWrapper = null;
+
+    function createLogo() {
+        // Create a logo
+        const logo = document.createElement('p');
+        logo.innerText = 'GeoAssistant AI';
+        logo.style.color = 'white';
+        logo.style.fontSize = '1.5rem';
+        logo.style.fontFamily = 'League Spartan, sans-serif';
+        logo.style.fontWeight = '600';
+        logo.style.fontStyle = 'normal';
+        logo.style.textAlign = 'center';
+        logo.style.textShadow = "0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154),"
+        + "0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154),"
+        + "0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154),"
+        + "0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154),"
+        + "0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154)";
+
+        return logo;
+    }
 
     function create360Button()
     {
@@ -643,6 +662,7 @@ const UIManager = (function() {
 
             const scan360Button = create360Button();
             const currentPOVButton = createCurrentPOVButton();
+            const logo = createLogo();
 
             toggleWrapper = document.createElement('div');
             toggleWrapper.style.position = 'absolute';
@@ -654,6 +674,7 @@ const UIManager = (function() {
             toggleWrapper.style.gap = '1rem';
             toggleWrapper.style.visibility = 'hidden';
 
+            toggleWrapper.appendChild(logo);
             toggleWrapper.appendChild(scan360Button);
             toggleWrapper.appendChild(currentPOVButton);
             
@@ -702,6 +723,14 @@ const UIManager = (function() {
     // Disable scrolling
     document.documentElement.style.overflow = 'hidden';
     document.body.scroll = "no";
+
+        // Create a <link> element for the Google Font
+    const link = document.createElement('link');
+    link.href = 'https://fonts.googleapis.com/css2?family=League+Spartan:wght@100..900&display=swap';
+    link.rel = 'stylesheet';
+
+    // Append the <link> element to the <head>
+    document.head.appendChild(link);
 
     const gameObserver = new MutationObserver(function() {
         let panoramaScreen = document.getElementsByClassName('game_panorama__6X071');
