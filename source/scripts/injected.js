@@ -103,10 +103,11 @@ function initOverlay(map) {
             this.cls = cls;
             this.refreshCanvasSize();
 
-            this.topleft = this.pointToSphere(topleftx, toplefty, heading, pitch);
-            this.topright = this.pointToSphere(bottomrightx, toplefty, heading, pitch);
-            this.bottomright = this.pointToSphere(bottomrightx, bottomrighty, heading, pitch);
-            this.bottomleft = this.pointToSphere(topleftx, bottomrighty, heading, pitch);
+            const hiddenCanvasSize = HiddenPanoramaMamager.getCanvasSize()
+            this.topleft = this.pointToSphere(topleftx, toplefty, heading, pitch, hiddenCanvasSize.width, hiddenCanvasSize.height);
+            this.topright = this.pointToSphere(bottomrightx, toplefty, heading, pitch, hiddenCanvasSize.width, hiddenCanvasSize.height);
+            this.bottomright = this.pointToSphere(bottomrightx, bottomrighty, heading, pitch, hiddenCanvasSize.width, hiddenCanvasSize.height);
+            this.bottomleft = this.pointToSphere(topleftx, bottomrighty, heading, pitch, hiddenCanvasSize.width, hiddenCanvasSize.height);
 
             this.coords = [this.topleft, this.topright, this.bottomright, this.bottomleft];
         }
@@ -407,14 +408,20 @@ function initOverlay(map) {
         }
 
         // Convert screen coordinates to spherical coordinates
-        pointToSphere(x, y, heading, pitch) {
-            x -= this.canvasWidth / 2;
-            y = this.canvasHeight / 2 - y;
+        pointToSphere(x, y, heading, pitch, width, height) {
+            if(!width) {
+                width = this.canvasWidth;
+            }
+            if(!height) {
+                height = this.canvasHeight;
+            }
+            x -= width / 2;
+            y = height / 2 - y;
             heading = this.toRadian(heading);
             pitch = this.toRadian(90 - pitch);
 
             // focal length
-            const z = (this.canvasWidth / 2) / Math.tan(this.toRadian(127) / 2);
+            const z = (width / 2) / Math.tan(this.toRadian(127) / 2);
 
             // angle offset within the viewport
             let theta = Math.acos(z / Math.sqrt(x * x + y * y + z * z));
@@ -535,7 +542,13 @@ const HiddenPanoramaManager = (function() {
         getCanvasElement: function() {
             return getCanvasElement();
         },
+        
+        getCanvasSize: function() {
+            const canvas = getCanvasElement();
 
+            return { width: canvas.offsetWidth, height: canvas.offsetHeight };
+        },
+        
         getEntireImageData: async function() {
             await synchronizeWithActivePano();
 
