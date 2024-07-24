@@ -9,71 +9,6 @@ HTMLCanvasElement.prototype.getContext = function(origFn) {
     };
 }(HTMLCanvasElement.prototype.getContext);
 
-// Disable scrolling
-document.body.style.overflow = 'hidden';
-
-const toggleWrapper = document.createElement('div');
-toggleWrapper.style.position = 'absolute';
-toggleWrapper.style.bottom = '17rem';
-toggleWrapper.style.left = '1.5rem';
-toggleWrapper.style.zIndex = '10';
-toggleWrapper.style.display = 'flex';
-toggleWrapper.style.flexDirection = 'column';
-toggleWrapper.style.gap = '1rem';
-toggleWrapper.style.visibility = 'hidden';
-
-function displayToggles() {
-    toggleWrapper.style.visibility = 'visible';
-}
-
-function hideToggles() {
-    toggleWrapper.style.visibility = 'hidden';
-}
-
-// Create a 360 button
-const scan360Button = document.createElement('button');
-scan360Button.innerText = 'Scan 360°';
-scan360Button.style.background = "linear-gradient(180deg, rgba(161, 155, 217, 0.6) 0%, rgba(161, 155, 217, 0) 50%, rgba(161, 155, 217, 0) 50%), rgba(86, 59, 154, 0.8)";
-scan360Button.style.color = "white";
-scan360Button.style.borderRadius = "1rem";
-scan360Button.style.padding = "1rem 2rem";
-scan360Button.style.transition = "background 0.3s";
-
-scan360Button.addEventListener('click', () => {
-    updateBoundingBoxes();
-});
-
-scan360Button.addEventListener('mouseover', () => {
-    scan360Button.style.background = "linear-gradient(180deg, rgba(161, 155, 217, 0.6) 0%, rgba(161, 155, 217, 0) 50%, rgba(161, 155, 217, 0) 50%), rgba(86, 59, 154, 1)";
-});
-
-scan360Button.addEventListener('mouseout', () => {
-    scan360Button.style.background = "linear-gradient(180deg, rgba(161, 155, 217, 0.6) 0%, rgba(161, 155, 217, 0) 50%, rgba(161, 155, 217, 0) 50%), rgba(86, 59, 154, 0.8)";
-});
-
-// Create a current pov button
-const currentPOVButton = document.createElement('button');
-currentPOVButton.innerText = 'Scan visible area';
-currentPOVButton.style.background = "linear-gradient(180deg, rgba(161, 155, 217, 0.6) 0%, rgba(161, 155, 217, 0) 50%, rgba(161, 155, 217, 0) 50%), rgba(86, 59, 154, 0.8)";
-currentPOVButton.style.color = "white";
-currentPOVButton.style.borderRadius = "1rem";
-currentPOVButton.style.padding = "1rem 2rem";
-currentPOVButton.style.transition = "background 0.3s";
-
-currentPOVButton.addEventListener('mouseover', () => {
-    currentPOVButton.style.background = "linear-gradient(180deg, rgba(161, 155, 217, 0.6) 0%, rgba(161, 155, 217, 0) 50%, rgba(161, 155, 217, 0) 50%), rgba(86, 59, 154, 1)";
-});
-
-currentPOVButton.addEventListener('mouseout', () => {
-    currentPOVButton.style.background = "linear-gradient(180deg, rgba(161, 155, 217, 0.6) 0%, rgba(161, 155, 217, 0) 50%, rgba(161, 155, 217, 0) 50%), rgba(86, 59, 154, 0.8)";
-});
-
-
-toggleWrapper.appendChild(scan360Button);
-toggleWrapper.appendChild(currentPOVButton);
-
-document.body.appendChild(toggleWrapper);
-
 function handlePanoChanged(panorama) {
     clearBoundingBoxes();
     // updateBoundingBoxes();
@@ -83,12 +18,22 @@ function clearBoundingBoxes() {
     document.querySelectorAll('[class*="boundingBox"]').forEach(el => el.remove());
 }
 
-async function updateBoundingBoxes()
+async function updateAllBoundingBoxes()
 {
-    HiddenPanoramaManager.setPano(ActivePanoramaManager.getPanorama().getPano());
-    // wait for the new location to load
-    await new Promise(r => setTimeout(r, 500));
-    const data = await HiddenPanoramaManager.getImageData();
+    const data = await HiddenPanoramaManager.getEntireImageData();
+    if(data !== null) {
+        console.log(data);
+        fetch("http://127.0.0.1:5000/update", {
+            method: "POST",
+            mode: "cors",
+            body: data
+        });
+    }
+}
+
+async function updateCurrentBoundingBoxes() {
+    const data = await HiddenPanoramaManager.getCurrentImageData();
+
     if(data !== null) {
         console.log(data);
         fetch("http://127.0.0.1:5000/update", {
@@ -534,11 +479,42 @@ const HiddenPanoramaManager = (function() {
     let panorama = null;
     let panoramaContainer = null;
 
+    function dataURLtoBlob(dataURL) {
+        let array, binary, i, len;
+        binary = atob(dataURL.split(',')[1]);
+        array = [];
+        i = 0;
+        len = binary.length;
+        while (i < len) {
+            array.push(binary.charCodeAt(i));
+            i++;
+        }
+        return new Blob([new Uint8Array(array)], {
+            type: 'image/png'
+        });
+    }
+
     function getCanvasElement() {
         if(panoramaContainer) {
             return panoramaContainer.querySelectorAll('.mapsConsumerUiSceneCoreScene__canvas')[0];
         }
     }
+
+    async function synchronizeWithActivePano() {
+        const activePano = ActivePanoramaManager.getPanorama().getPano();
+        if(activePano && panorama.getPano() !== activePano) {
+            panorama.setPano(activePano);
+            // wait for the new location to load
+            await new Promise(r => setTimeout(r, 500));
+        }
+    }
+
+    async function setPovDelayed(pov) {
+        panorama.setPov(pov);
+        // this is to make sure the pov actually updates
+        await new Promise(r => setTimeout(r, 500));
+    }
+
     return {
         initialize: function() {
             const copyDiv = document.createElement('div');
@@ -560,7 +536,9 @@ const HiddenPanoramaManager = (function() {
             return getCanvasElement();
         },
 
-        getImageData: async function() {
+        getEntireImageData: async function() {
+            await synchronizeWithActivePano();
+
             const povs = [
                 { heading: 0, pitch: -89, zoom: 0},
                 { heading: 0, pitch: 0, zoom: 0},
@@ -568,28 +546,11 @@ const HiddenPanoramaManager = (function() {
                 { heading: 240, pitch: 0, zoom: 0}
             ];
 
-            function dataURLtoBlob(dataURL) {
-                let array, binary, i, len;
-                binary = atob(dataURL.split(',')[1]);
-                array = [];
-                i = 0;
-                len = binary.length;
-                while (i < len) {
-                    array.push(binary.charCodeAt(i));
-                    i++;
-                }
-                return new Blob([new Uint8Array(array)], {
-                    type: 'image/png'
-                });
-            }
-
             const canvas = getCanvasElement();
             if(canvas) {
                 const imageData = new FormData();
                 for(let i = 0; i < povs.length; i++) {
-                    panorama.setPov(povs[i]);
-                    // this is to make sure the pov actually updates
-                    await new Promise(r => setTimeout(r, 500));
+                    await setPovDelayed(povs[i]);
                     const dataUrl = await canvas.toDataURL();
                     imageData.append('data' + i, dataURLtoBlob(dataUrl));
                 };
@@ -598,20 +559,124 @@ const HiddenPanoramaManager = (function() {
             return null;
         },
 
-        setPano: function (pano) {
-            panorama.setPano(pano);
+        getCurrentImageData: async function() {
+            await synchronizeWithActivePano();
+            await setPovDelayed(ActivePanoramaManager.getPanorama().getPov());
+
+            const canvas = getCanvasElement();
+            if(canvas) {
+                const result = new FormData();
+                const dataUrl = await canvas.toDataURL();
+                result.append('data', dataURLtoBlob(dataUrl));
+                
+                return result;
+            }
+
+            return null;
         },
     }
 })();
 
+const UIManager = (function() {
+    let toggleWrapper = null;
+
+    function create360Button()
+    {
+        // Create a 360 button
+        const scan360Button = document.createElement('button');
+        scan360Button.innerText = 'Scan 360°';
+        scan360Button.style.background = "linear-gradient(180deg, rgba(161, 155, 217, 0.6) 0%, rgba(161, 155, 217, 0) 50%, rgba(161, 155, 217, 0) 50%), rgba(86, 59, 154, 0.8)";
+        scan360Button.style.color = "white";
+        scan360Button.style.borderRadius = "1rem";
+        scan360Button.style.padding = "1rem 2rem";
+        scan360Button.style.transition = "background 0.3s";
+
+        scan360Button.addEventListener('click', () => {
+            updateAllBoundingBoxes();
+        });
+
+        scan360Button.addEventListener('mouseover', () => {
+            scan360Button.style.background = "linear-gradient(180deg, rgba(161, 155, 217, 0.6) 0%, rgba(161, 155, 217, 0) 50%, rgba(161, 155, 217, 0) 50%), rgba(86, 59, 154, 1)";
+        });
+
+        scan360Button.addEventListener('mouseout', () => {
+            scan360Button.style.background = "linear-gradient(180deg, rgba(161, 155, 217, 0.6) 0%, rgba(161, 155, 217, 0) 50%, rgba(161, 155, 217, 0) 50%), rgba(86, 59, 154, 0.8)";
+        });
+
+        return scan360Button
+    }
+
+    function createCurrentPOVButton()
+    {
+        // Create a current pov button
+        const currentPOVButton = document.createElement('button');
+        currentPOVButton.innerText = 'Scan visible area';
+        currentPOVButton.style.background = "linear-gradient(180deg, rgba(161, 155, 217, 0.6) 0%, rgba(161, 155, 217, 0) 50%, rgba(161, 155, 217, 0) 50%), rgba(86, 59, 154, 0.8)";
+        currentPOVButton.style.color = "white";
+        currentPOVButton.style.borderRadius = "1rem";
+        currentPOVButton.style.padding = "1rem 2rem";
+        currentPOVButton.style.transition = "background 0.3s";
+
+        currentPOVButton.addEventListener('click', () => {
+            updateCurrentBoundingBoxes();
+        });
+
+        currentPOVButton.addEventListener('mouseover', () => {
+            currentPOVButton.style.background = "linear-gradient(180deg, rgba(161, 155, 217, 0.6) 0%, rgba(161, 155, 217, 0) 50%, rgba(161, 155, 217, 0) 50%), rgba(86, 59, 154, 1)";
+        });
+
+        currentPOVButton.addEventListener('mouseout', () => {
+            currentPOVButton.style.background = "linear-gradient(180deg, rgba(161, 155, 217, 0.6) 0%, rgba(161, 155, 217, 0) 50%, rgba(161, 155, 217, 0) 50%), rgba(86, 59, 154, 0.8)";
+        });
+
+        return currentPOVButton;
+    }
+
+    return {
+        initUI: function() {
+            
+            // Disable scrolling
+            document.body.style.overflow = 'hidden';
+
+            const scan360Button = create360Button();
+            const currentPOVButton = createCurrentPOVButton();
+
+            toggleWrapper = document.createElement('div');
+            toggleWrapper.style.position = 'absolute';
+            toggleWrapper.style.bottom = '17rem';
+            toggleWrapper.style.left = '1.5rem';
+            toggleWrapper.style.zIndex = '10';
+            toggleWrapper.style.display = 'flex';
+            toggleWrapper.style.flexDirection = 'column';
+            toggleWrapper.style.gap = '1rem';
+            toggleWrapper.style.visibility = 'hidden';
+
+            toggleWrapper.appendChild(scan360Button);
+            toggleWrapper.appendChild(currentPOVButton);
+            
+            document.body.appendChild(toggleWrapper);
+        },
+
+        displayToggles: function() {
+            toggleWrapper.style.visibility = 'visible';
+        },
+
+        hideToggles: function() {
+            toggleWrapper.style.visibility = 'hidden';
+        }
+    }
+})();
+
 (function () {
+    UIManager.initUI();
+
     const loadingObserver = new MutationObserver(function() {
         const loadingScreen = document.getElementsByClassName('fullscreen-spinner_root__gtDP1')
 
         if(loadingScreen.length === 0) {
             this.disconnect();
             // updateBoundingBoxes(ActivePanoramaManager.getPanorama());
-            displayToggles();
+            UIManager.displayToggles();
         }
     });
 
@@ -621,7 +686,7 @@ const HiddenPanoramaManager = (function() {
         if(loadingScreen.length === 1) {
             this.disconnect();
             loadingObserver.observe(document.body, {childList: true, subtree: true});
-            hideToggles();
+            UIManager.hideToggles();
         }
     }).observe(document.body, { childList: true, subtree: true });
 
