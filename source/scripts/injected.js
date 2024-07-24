@@ -574,6 +574,12 @@ const HiddenPanoramaManager = (function() {
 
             return null;
         },
+
+        remove: function() {
+            if (panoramaContainer) {
+                panoramaContainer.style.display = 'none';
+            }
+        }
     }
 })();
 
@@ -634,9 +640,6 @@ const UIManager = (function() {
 
     return {
         initUI: function() {
-            
-            // Disable scrolling
-            document.body.style.overflow = 'hidden';
 
             const scan360Button = create360Button();
             const currentPOVButton = createCurrentPOVButton();
@@ -663,44 +666,87 @@ const UIManager = (function() {
 
         hideToggles: function() {
             toggleWrapper.style.visibility = 'hidden';
-        }
+        },
+
+        remove: function(){
+            if (toggleWrapper) {
+                toggleWrapper.remove();
+            }
+        },
     }
 })();
 
 (function () {
-    UIManager.initUI();
+    // UIManager.initUI();
 
-    const loadingObserver = new MutationObserver(function() {
-        const loadingScreen = document.getElementsByClassName('fullscreen-spinner_root__gtDP1')
+    // const loadingObserver = new MutationObserver(function() {
+    //     const loadingScreen = document.getElementsByClassName('fullscreen-spinner_root__gtDP1')
 
-        if(loadingScreen.length === 0) {
+    //     if(loadingScreen.length === 0) {
+    //         this.disconnect();
+    //         // updateBoundingBoxes(ActivePanoramaManager.getPanorama());
+    //         UIManager.displayToggles();
+    //     }
+    // });
+
+    // new MutationObserver(function() {
+    //     const loadingScreen = document.getElementsByClassName('fullscreen-spinner_root__gtDP1')
+
+    //     if(loadingScreen.length === 1) {
+    //         this.disconnect();
+    //         loadingObserver.observe(document.body, {childList: true, subtree: true});
+    //         UIManager.hideToggles();
+    //     }
+    // }).observe(document.body, { childList: true, subtree: true });
+
+    // Disable scrolling
+    document.documentElement.style.overflow = 'hidden';
+    document.body.scroll = "no";
+
+    const gameObserver = new MutationObserver(function() {
+        let panoramaScreen = document.getElementsByClassName('game_panorama__6X071');
+        let loadingScreen = document.getElementsByClassName('fullscreen-spinner_root__gtDP1');
+        let resultsScreen = document.getElementsByClassName('result-layout_root__fRPgH');
+
+        if(panoramaScreen.length === 0) {
             this.disconnect();
-            // updateBoundingBoxes(ActivePanoramaManager.getPanorama());
+            HiddenPanoramaManager.remove();
+            UIManager.remove();
+            initialisationObserver.observe(document.body, {childList: true, subtree: true});
+        }
+         else if (loadingScreen.length === 0 && resultsScreen.length === 0) {
             UIManager.displayToggles();
+        } else if (loadingScreen.length === 1 || resultsScreen.length === 1) {
+            UIManager.hideToggles();
+        }
+    });
+
+    const initialisationObserver = new MutationObserver(function() {
+        let script = document.querySelector("[src*='maps.googleapis.com/maps/api']");
+        let panoramaScreen = document.getElementsByClassName('game_panorama__6X071');
+
+        if (script && panoramaScreen.length === 1) {
+            this.disconnect();
+            HiddenPanoramaManager.initialize();
+            UIManager.initUI();
+            initStreetView();
+            gameObserver.observe(document.body, {childList: true, subtree: true});
         }
     });
 
     new MutationObserver(function() {
-        const loadingScreen = document.getElementsByClassName('fullscreen-spinner_root__gtDP1')
-
-        if(loadingScreen.length === 1) {
-            this.disconnect();
-            loadingObserver.observe(document.body, {childList: true, subtree: true});
-            UIManager.hideToggles();
-        }
-    }).observe(document.body, { childList: true, subtree: true });
-
-    new MutationObserver(function() {
         let script = document.querySelector("[src*='maps.googleapis.com/maps/api']");
+        let panoramaScreen = document.getElementsByClassName('game_panorama__6X071');
 
-        if (script) {
+        if (script && panoramaScreen.length === 1) {
             this.disconnect();
             script.onload = () => {
                 HiddenPanoramaManager.initialize();
+                UIManager.initUI();
                 initStreetView();
             };
-
-
+            gameObserver.observe(document.body, {childList: true, subtree: true});
         }
     }).observe(document.head, {childList: true, subtree: true});
+
 })();
