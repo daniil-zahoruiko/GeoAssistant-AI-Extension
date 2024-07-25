@@ -55,23 +55,6 @@ async function updateCurrentBoundingBoxes() {
     }
 }
 
-function handlePovChanged(panorama) {
-    if(!first_pov) {
-        first_pov = true;
-    }
-    else if(pov.heading !== panorama.getPov().heading || pov.pitch !== panorama.getPov().pitch) {
-        window.dispatchEvent(new CustomEvent('POVchanged', {detail: panorama.getPov()}));
-    }
-    pov = panorama.getPov();
-}
-
-window.addEventListener('fetchOriginPOV', (e) => {
-    var streetViewService = new google.maps.StreetViewService();
-    streetViewService.getPanorama({pano: e.detail}, function(data, status) {
-        window.dispatchEvent(new CustomEvent('sendOriginPOV', {detail: data.tiles}));
-    })
-});
-
 // window.addEventListener('resize', (e) => {console.log(window.innerWidth, window.innerHeight)});
 
 function initStreetView() {
@@ -81,14 +64,12 @@ function initStreetView() {
 
             ActivePanoramaManager.initialize(this);
 
-            // initOverlay(this);
             this.addListener('pano_changed', () => handlePanoChanged(this));
-            this.addListener('pov_changed', () => handlePovChanged(this));
         }
     }
 }
 
-function initOverlay(map) {
+function initOverlay() {
     class SpherePoint {
         // we only have theta and phi here since r can be calculated as focal length, and in most cases we just need theta and phi
         constructor(theta, phi) {
@@ -464,19 +445,6 @@ function initOverlay(map) {
             this.canvasHeight = canvas.offsetHeight;
         }
     }
-
-    window.addEventListener('addBoundingBoxes', (e) => {
-        const boundingBoxesData = e.detail;
-        const pov = boundingBoxesData.pov;
-        if(boundingBoxesData.pano != map.getPano()) {
-            return;
-        }
-        for(let i = 0; i < boundingBoxesData.boundingBoxes.length; i++) {
-            const boundingBox = boundingBoxesData.boundingBoxes[i];
-            const overlay = new BoundingBoxOverlay(boundingBox.coords[0], boundingBox.coords[1], boundingBox.coords[2], boundingBox.coords[3], pov.heading, pov.pitch, boundingBox.cls);
-            overlay.setMap(map);
-        }
-    });
 }
 
 const ActivePanoramaManager = (function() {
