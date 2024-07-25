@@ -1,6 +1,8 @@
 var pov;
 var first_pov = false;
 
+class BoundingBoxOverlay {}
+
 HTMLCanvasElement.prototype.getContext = function(origFn) {
     return function(type, attribs) {
       attribs = attribs || {};
@@ -11,7 +13,6 @@ HTMLCanvasElement.prototype.getContext = function(origFn) {
 
 function handlePanoChanged(panorama) {
     clearBoundingBoxes();
-    // updateBoundingBoxes();
 }
 
 function clearBoundingBoxes() {
@@ -36,10 +37,20 @@ async function updateCurrentBoundingBoxes() {
 
     if(data !== null) {
         console.log(data);
-        fetch("http://127.0.0.1:5000/update", {
+        await fetch("http://127.0.0.1:5000/update", {
             method: "POST",
             mode: "cors",
             body: data
+        }).then(data => data.json())
+        .then((boundingBoxes) => {
+            console.log(boundingBoxes);
+            const pov = HiddenPanoramaManager.getPanorama().getPov();
+            boundingBoxes.forEach(boundingBox => {
+                console.log(window.BoundingBoxOverlay);
+                const overlay = new BoundingBoxOverlay(boundingBox.coords[0], boundingBox.coords[1], boundingBox.coords[2], boundingBox.coords[3], pov.heading, pov.pitch, boundingBox.cls);
+                overlay.setMap(ActivePanoramaManager.getPanorama());
+            });
+            return Promise.resolve();
         });
     }
 }
@@ -87,7 +98,7 @@ function initOverlay(map) {
     }
 
     // TODO: change all uses of theta and phi to use the SpherePoint class (that is, get rid of all topleftTheta and topleftPhi and start using topleft.Theta and topleft.Phi)
-    class BoundingBoxOverlay extends google.maps.OverlayView{
+    BoundingBoxOverlay = class extends google.maps.OverlayView{
         topleft;
         topright;
         bottomleft;
@@ -103,7 +114,7 @@ function initOverlay(map) {
             this.cls = cls;
             this.refreshCanvasSize();
 
-            const hiddenCanvasSize = HiddenPanoramaMamager.getCanvasSize()
+            const hiddenCanvasSize = HiddenPanoramaManager.getCanvasSize()
             this.topleft = this.pointToSphere(topleftx, toplefty, heading, pitch, hiddenCanvasSize.width, hiddenCanvasSize.height);
             this.topright = this.pointToSphere(bottomrightx, toplefty, heading, pitch, hiddenCanvasSize.width, hiddenCanvasSize.height);
             this.bottomright = this.pointToSphere(bottomrightx, bottomrighty, heading, pitch, hiddenCanvasSize.width, hiddenCanvasSize.height);
@@ -549,6 +560,10 @@ const HiddenPanoramaManager = (function() {
             return { width: canvas.offsetWidth, height: canvas.offsetHeight };
         },
         
+        getPanorama: function() {
+            return panorama;
+        },
+
         getEntireImageData: async function() {
             await synchronizeWithActivePano();
 
@@ -786,6 +801,7 @@ const UIManager = (function() {
             HiddenPanoramaManager.initialize();
             UIManager.initUI();
             initStreetView();
+            initOverlay();
             gameObserver.observe(document.body, {childList: true, subtree: true});
         }
     });
@@ -800,6 +816,7 @@ const UIManager = (function() {
                 HiddenPanoramaManager.initialize();
                 UIManager.initUI();
                 initStreetView();
+                initOverlay();
             };
             gameObserver.observe(document.body, {childList: true, subtree: true});
         }
