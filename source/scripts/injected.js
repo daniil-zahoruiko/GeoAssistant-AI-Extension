@@ -503,6 +503,10 @@ const HiddenPanoramaManager = (function() {
 
     return {
         initialize: function() {
+            if (panoramaContainer) {
+                panoramaContainer.style.display = 'block';
+                return;
+            }
             const copyDiv = document.createElement('div');
             copyDiv.id = 'copyDiv';
             copyDiv.style.position = 'absolute';
@@ -513,8 +517,11 @@ const HiddenPanoramaManager = (function() {
             document.body.appendChild(copyDiv);
 
             panoramaContainer = copyDiv;
+        },
+
+        initPanorama: function() {
             panorama = new google.maps.StreetViewPanorama(document.getElementById('copyDiv'), {
-                showRoadLabels: false
+                 showRoadLabels: false
             });
         },
 
@@ -594,21 +601,6 @@ const UIManager = (function() {
     let toggleWrapper = null;
 
     function createLogo() {
-        // Create a logo
-        // const logo = document.createElement('p');
-        // logo.innerText = 'GeoAssistant AI';
-        // logo.style.color = 'white';
-        // logo.style.fontSize = '1.5rem';
-        // logo.style.fontFamily = 'League Spartan, sans-serif';
-        // logo.style.fontWeight = '600';
-        // logo.style.fontStyle = 'normal';
-        // logo.style.textAlign = 'center';
-        // logo.style.textShadow = "0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154),"
-        // + "0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154),"
-        // + "0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154),"
-        // + "0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154),"
-        // + "0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154), 0 0 3px rgb(86, 59, 154)";
-
         return logo;
     }
 
@@ -684,7 +676,7 @@ const UIManager = (function() {
             toggleWrapper.appendChild(logo);
             toggleWrapper.appendChild(scan360Button);
             toggleWrapper.appendChild(currentPOVButton);
-            
+
             document.body.appendChild(toggleWrapper);
         },
 
@@ -705,28 +697,6 @@ const UIManager = (function() {
 })();
 
 (function () {
-    // UIManager.initUI();
-
-    // const loadingObserver = new MutationObserver(function() {
-    //     const loadingScreen = document.getElementsByClassName('fullscreen-spinner_root__gtDP1')
-
-    //     if(loadingScreen.length === 0) {
-    //         this.disconnect();
-    //         // updateBoundingBoxes(ActivePanoramaManager.getPanorama());
-    //         UIManager.displayToggles();
-    //     }
-    // });
-
-    // new MutationObserver(function() {
-    //     const loadingScreen = document.getElementsByClassName('fullscreen-spinner_root__gtDP1')
-
-    //     if(loadingScreen.length === 1) {
-    //         this.disconnect();
-    //         loadingObserver.observe(document.body, {childList: true, subtree: true});
-    //         UIManager.hideToggles();
-    //     }
-    // }).observe(document.body, { childList: true, subtree: true });
-
     // Request SVG content from content_script.js
     window.postMessage({ type: 'REQUEST_SVG' }, '*');
 
@@ -768,26 +738,15 @@ const UIManager = (function() {
             this.disconnect();
             HiddenPanoramaManager.initialize();
             UIManager.initUI();
-            initStreetView();
-            initOverlay();
-            gameObserver.observe(document.body, {childList: true, subtree: true});
-        }
-    });
-
-    new MutationObserver(function() {
-        let script = document.querySelector("[src*='maps.googleapis.com/maps/api']");
-        let panoramaScreen = document.getElementsByClassName('game_panorama__6X071');
-
-        if (script && panoramaScreen.length === 1) {
-            this.disconnect();
             script.onload = () => {
-                HiddenPanoramaManager.initialize();
-                UIManager.initUI();
+                HiddenPanoramaManager.initPanorama();
                 initStreetView();
                 initOverlay();
             };
             gameObserver.observe(document.body, {childList: true, subtree: true});
         }
-    }).observe(document.head, {childList: true, subtree: true});
+    });
+
+    initialisationObserver.observe(document.head, {childList: true, subtree: true});
 
 })();
