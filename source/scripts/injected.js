@@ -1,5 +1,9 @@
-var pov;
-var first_pov = false;
+const _360ScanPovs = [
+    { heading: 0, pitch: -89, zoom: 0},
+    { heading: 0, pitch: 0, zoom: 0},
+    { heading: 120, pitch: 0, zoom: 0},
+    { heading: 240, pitch: 0, zoom: 0}
+];
 
 class BoundingBoxOverlay {}
 
@@ -28,6 +32,16 @@ async function updateAllBoundingBoxes()
             method: "POST",
             mode: "cors",
             body: data
+        }).then(data => data.json())
+        .then((povScans) => {
+            console.log(povScans)
+            for(let i = 0; i < povScans.length; i++) {
+                povScans[i].forEach(boundingBox => {
+                    console.log(window.BoundingBoxOverlay);
+                    const overlay = new BoundingBoxOverlay(boundingBox.coords[0], boundingBox.coords[1], boundingBox.coords[2], boundingBox.coords[3], _360ScanPovs[i].heading, _360ScanPovs[i].pitch, boundingBox.cls);
+                    overlay.setMap(ActivePanoramaManager.getPanorama());
+                });
+            }
         });
     }
 }
@@ -41,7 +55,7 @@ async function updateCurrentBoundingBoxes() {
             method: "POST",
             mode: "cors",
             body: data
-        }).then(data => data.json())
+        }).then(data => data.json()[0])
         .then((boundingBoxes) => {
             console.log(boundingBoxes);
             const pov = HiddenPanoramaManager.getPanorama().getPov();
@@ -54,8 +68,6 @@ async function updateCurrentBoundingBoxes() {
         });
     }
 }
-
-// window.addEventListener('resize', (e) => {console.log(window.innerWidth, window.innerHeight)});
 
 function initStreetView() {
     google.maps.StreetViewPanorama = class extends google.maps.StreetViewPanorama {
@@ -78,7 +90,6 @@ function initOverlay() {
         }
     }
 
-    // TODO: change all uses of theta and phi to use the SpherePoint class (that is, get rid of all topleftTheta and topleftPhi and start using topleft.Theta and topleft.Phi)
     BoundingBoxOverlay = class extends google.maps.OverlayView{
         topleft;
         topright;
@@ -166,75 +177,10 @@ function initOverlay() {
             // Append the circle to the SVG
             svg.appendChild(circle);
 
-            this.div.appendChild(svg); // previous version of the highlite area
-
-            // Create a highlite area
-            this.contSVG = document.createElementNS(svgNS, "svg");
-            this.contSVG.setAttribute("width", "100");
-            this.contSVG.setAttribute("height", "100");
-            this.contSVG.style.position = "absolute";
-
-            // Initialize the highlite area lines
-            const topLine = document.createElementNS(svgNS, 'line');
-            const bottomLine = document.createElementNS(svgNS, 'line');
-            const leftLine = document.createElementNS(svgNS, 'line');
-            const rightLine = document.createElementNS(svgNS, 'line');
-
-            topLine.setAttribute('x1', 0);
-            topLine.setAttribute('y1', 0);
-            topLine.setAttribute('x2', 0);
-            topLine.setAttribute('y2', 0);
-            topLine.setAttribute('stroke', 'red');
-            topLine.setAttribute('stroke-width', '2');
-
-            bottomLine.setAttribute('x1', 0);
-            bottomLine.setAttribute('y1', 0);
-            bottomLine.setAttribute('x2', 0);
-            bottomLine.setAttribute('y2', 0);
-            bottomLine.setAttribute('stroke', 'red');
-            bottomLine.setAttribute('stroke-width', '2');
-
-            leftLine.setAttribute('x1', 0);
-            leftLine.setAttribute('y1', 0);
-            leftLine.setAttribute('x2', 0);
-            leftLine.setAttribute('y2', 0);
-            leftLine.setAttribute('stroke', 'red');
-            leftLine.setAttribute('stroke-width', '2');
-
-            rightLine.setAttribute('x1', 0);
-            rightLine.setAttribute('y1', 0);
-            rightLine.setAttribute('x2', 0);
-            rightLine.setAttribute('y2', 0);
-            rightLine.setAttribute('stroke', 'red');
-            rightLine.setAttribute('stroke-width', '2');
-
-            // Append the lines to the SVG
-            this.contSVG.appendChild(topLine);
-            this.contSVG.appendChild(bottomLine);
-            this.contSVG.appendChild(leftLine);
-            this.contSVG.appendChild(rightLine);
-
-            // test
-            this.topleftEl = document.createElement('p');
-            this.topleftEl.innerText = "Top Left";
-            this.topleftEl.style.position = "absolute";
-            this.toprightEl = document.createElement('p');
-            this.toprightEl.innerText = "Top Right";
-            this.toprightEl.style.position = "absolute";
-            this.bottomleftEl = document.createElement('p');
-            this.bottomleftEl.innerText = "Bottom Left";
-            this.bottomleftEl.style.position = "absolute";
-            this.bottomrightEl = document.createElement('p');
-            this.bottomrightEl.innerText = "Bottom Right";
-            this.bottomrightEl.style.position = "absolute";
+            this.div.appendChild(svg);
 
             const panes = this.getPanes();
             panes.overlayLayer.appendChild(this.div);
-            panes.overlayLayer.appendChild(this.contSVG);
-            panes.overlayLayer.appendChild(this.topleftEl);
-            panes.overlayLayer.appendChild(this.toprightEl);
-            panes.overlayLayer.appendChild(this.bottomleftEl);
-            panes.overlayLayer.appendChild(this.bottomrightEl);
         }
 
         draw() {
@@ -244,63 +190,17 @@ function initOverlay() {
                 const currentPov = this.getMap().getPov();
                 if(!this.isOnScreen(currentPov)) {
                     this.div.style.visibility = 'hidden';
-                    this.contSVG.style.visibility = 'hidden';
+                    // this.contSVG.style.visibility = 'hidden';
                     return;
                 }
 
                 const newCoords = this.calculateCurrentCoords(currentPov);
 
-                const topleftCoords = this.getPointOnScreen(this.topleft.theta, this.topleft.phi, currentPov.heading, currentPov.pitch);
-                const toprightCoords = this.getPointOnScreen(this.topright.theta, this.topright.phi, currentPov.heading, currentPov.pitch);
-                const bottomrightCoords = this.getPointOnScreen(this.bottomright.theta, this.bottomright.phi, currentPov.heading, currentPov.pitch);
-                const bottomleftCoords = this.getPointOnScreen(this.bottomleft.theta, this.bottomleft.phi, currentPov.heading, currentPov.pitch);
-
-                this.topleftEl.style.left = `${topleftCoords.x}px`;
-                this.topleftEl.style.top = `${topleftCoords.y}px`;
-                this.toprightEl.style.left = `${toprightCoords.x}px`;
-                this.toprightEl.style.top = `${toprightCoords.y}px`;
-                this.bottomleftEl.style.left = `${bottomleftCoords.x}px`;
-                this.bottomleftEl.style.top = `${bottomleftCoords.y}px`;
-                this.bottomrightEl.style.left = `${bottomrightCoords.x}px`;
-                this.bottomrightEl.style.top = `${bottomrightCoords.y}px`;
-
-                this.div.style.visibility = 'hidden'; // hide previous version of the highlite area
-                this.contSVG.style.visibility = 'visible';
+                this.div.style.visibility = 'visible';
                 this.div.style.left = `${newCoords.left}px`;
                 this.div.style.top = `${newCoords.top}px`;
                 this.div.style.width = `${newCoords.width}px`;
                 this.div.style.height = `${newCoords.height}px`;
-                this.contSVG.style.left = `${newCoords.left}px`;
-                this.contSVG.style.top = `${newCoords.top}px`;
-
-                this.contSVG.setAttribute("width", newCoords.width);
-                this.contSVG.setAttribute("height", newCoords.height);
-
-                const origin = {x: topleftCoords.x - newCoords.left + 1, y: topleftCoords.y - newCoords.top + 1};
-                const topRight = {x: toprightCoords.x - newCoords.left - 1, y: toprightCoords.y - newCoords.top + 1};
-                const bottomRight = {x: bottomrightCoords.x - newCoords.left - 1, y: bottomrightCoords.y - newCoords.top - 1};
-                const bottomLeft = {x: bottomleftCoords.x - newCoords.left + 1, y: bottomleftCoords.y - newCoords.top - 1};
-
-                this.contSVG.children[0].setAttribute('x1', origin.x);
-                this.contSVG.children[0].setAttribute('y1', origin.y);
-                this.contSVG.children[0].setAttribute('x2', topRight.x);
-                this.contSVG.children[0].setAttribute('y2', topRight.y);
-
-
-                this.contSVG.children[1].setAttribute('x1', bottomLeft.x);
-                this.contSVG.children[1].setAttribute('y1', bottomLeft.y);
-                this.contSVG.children[1].setAttribute('x2', bottomRight.x);
-                this.contSVG.children[1].setAttribute('y2', bottomRight.y);
-
-                this.contSVG.children[2].setAttribute('x1', origin.x);
-                this.contSVG.children[2].setAttribute('y1', origin.y);
-                this.contSVG.children[2].setAttribute('x2', bottomLeft.x);
-                this.contSVG.children[2].setAttribute('y2', bottomLeft.y);
-
-                this.contSVG.children[3].setAttribute('x1', bottomRight.x);
-                this.contSVG.children[3].setAttribute('y1', bottomRight.y);
-                this.contSVG.children[3].setAttribute('x2', topRight.x);
-                this.contSVG.children[3].setAttribute('y2', topRight.y);
             }
         }
 
@@ -542,18 +442,11 @@ const HiddenPanoramaManager = (function() {
         getEntireImageData: async function() {
             await synchronizeWithActivePano();
 
-            const povs = [
-                { heading: 0, pitch: -89, zoom: 0},
-                { heading: 0, pitch: 0, zoom: 0},
-                { heading: 120, pitch: 0, zoom: 0},
-                { heading: 240, pitch: 0, zoom: 0}
-            ];
-
             const canvas = getCanvasElement();
             if(canvas) {
                 const imageData = new FormData();
-                for(let i = 0; i < povs.length; i++) {
-                    await setPovDelayed(povs[i]);
+                for(let i = 0; i < _360ScanPovs.length; i++) {
+                    await setPovDelayed(_360ScanPovs[i]);
                     const dataUrl = await canvas.toDataURL();
                     imageData.append('data' + i, dataURLtoBlob(dataUrl));
                 };
