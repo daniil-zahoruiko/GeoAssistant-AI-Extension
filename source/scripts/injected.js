@@ -286,7 +286,7 @@ function initOverlay() {
             heading = this.toRadian(heading);
             pitch = this.toRadian(90 - pitch);
             phi = (phi - heading + 2 * Math.PI) % (2 * Math.PI);
-            const z = (this.canvasWidth / 2) / Math.tan(this.toRadian(Math.atan(Math.pow(2,1-zoom))*360/Math.PI) / 2);
+            const z = (this.canvasWidth / 2) / Math.tan(Math.atan(Math.pow(2,1-zoom)));
 
             const reversePitchCoords = this.sphericalRotateX(theta, phi, -pitch);
             const len = Math.sqrt(Math.pow(z / Math.cos(reversePitchCoords.theta), 2) - z * z);
@@ -311,7 +311,7 @@ function initOverlay() {
             pitch = this.toRadian(90 - pitch);
 
             // focal length
-            const z = (width / 2) / Math.tan(this.toRadian(Math.atan(Math.pow(2,1-zoom))*360/Math.PI) / 2);
+            const z = (width / 2) / Math.tan(Math.atan(Math.pow(2,1-zoom)));
 
             // angle offset within the viewport
             let theta = Math.acos(z / Math.sqrt(x * x + y * y + z * z));
