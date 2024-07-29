@@ -37,8 +37,7 @@ async function updateAllBoundingBoxes()
             console.log(povScans)
             for(let i = 0; i < povScans.length; i++) {
                 povScans[i].forEach(boundingBox => {
-                    console.log(window.BoundingBoxOverlay);
-                    const overlay = new BoundingBoxOverlay(boundingBox.coords[0], boundingBox.coords[1], boundingBox.coords[2], boundingBox.coords[3], _360ScanPovs[i].heading, _360ScanPovs[i].pitch, boundingBox.cls);
+                    const overlay = new BoundingBoxOverlay(boundingBox.coords[0], boundingBox.coords[1], boundingBox.coords[2], boundingBox.coords[3], _360ScanPovs[i].heading, _360ScanPovs[i].pitch, _360ScanPovs[i].zoom, boundingBox.cls);
                     overlay.setMap(ActivePanoramaManager.getPanorama());
                 });
             }
@@ -55,13 +54,12 @@ async function updateCurrentBoundingBoxes() {
             method: "POST",
             mode: "cors",
             body: data
-        }).then(data => data.json()[0])
+        }).then(data => data.json())
         .then((boundingBoxes) => {
-            console.log(boundingBoxes);
             const pov = HiddenPanoramaManager.getPanorama().getPov();
-            boundingBoxes.forEach(boundingBox => {
+            boundingBoxes[0].forEach(boundingBox => {
                 console.log(window.BoundingBoxOverlay);
-                const overlay = new BoundingBoxOverlay(boundingBox.coords[0], boundingBox.coords[1], boundingBox.coords[2], boundingBox.coords[3], pov.heading, pov.pitch, boundingBox.cls);
+                const overlay = new BoundingBoxOverlay(boundingBox.coords[0], boundingBox.coords[1], boundingBox.coords[2], boundingBox.coords[3], pov.heading, pov.pitch, pov.zoom, boundingBox.cls);
                 overlay.setMap(ActivePanoramaManager.getPanorama());
             });
             return Promise.resolve();
@@ -101,16 +99,16 @@ function initOverlay() {
         div;
         contSVG;
 
-        constructor(topleftx, toplefty, bottomrightx, bottomrighty, heading, pitch, cls) {
+        constructor(topleftx, toplefty, bottomrightx, bottomrighty, heading, pitch, zoom, cls) {
             super();
             this.cls = cls;
             this.refreshCanvasSize();
 
             const hiddenCanvasSize = HiddenPanoramaManager.getCanvasSize()
-            this.topleft = this.pointToSphere(topleftx, toplefty, heading, pitch, hiddenCanvasSize.width, hiddenCanvasSize.height);
-            this.topright = this.pointToSphere(bottomrightx, toplefty, heading, pitch, hiddenCanvasSize.width, hiddenCanvasSize.height);
-            this.bottomright = this.pointToSphere(bottomrightx, bottomrighty, heading, pitch, hiddenCanvasSize.width, hiddenCanvasSize.height);
-            this.bottomleft = this.pointToSphere(topleftx, bottomrighty, heading, pitch, hiddenCanvasSize.width, hiddenCanvasSize.height);
+            this.topleft = this.pointToSphere(topleftx, toplefty, heading, pitch, zoom, hiddenCanvasSize.width, hiddenCanvasSize.height);
+            this.topright = this.pointToSphere(bottomrightx, toplefty, heading, pitch, zoom, hiddenCanvasSize.width, hiddenCanvasSize.height);
+            this.bottomright = this.pointToSphere(bottomrightx, bottomrighty, heading, pitch, zoom, hiddenCanvasSize.width, hiddenCanvasSize.height);
+            this.bottomleft = this.pointToSphere(topleftx, bottomrighty, heading, pitch, zoom, hiddenCanvasSize.width, hiddenCanvasSize.height);
 
             this.coords = [this.topleft, this.topright, this.bottomright, this.bottomleft];
         }
@@ -162,8 +160,8 @@ function initOverlay() {
 
             const svgNS = "http://www.w3.org/2000/svg";
             const svg = document.createElementNS(svgNS, "svg");
-            svg.setAttribute("width", this.div.style.width);
-            svg.setAttribute("height", this.div.style.height);
+            //svg.setAttribute("width", this.div.style.width);
+            //svg.setAttribute("height", this.div.style.height);
 
             // Create a circle element
             const circle = document.createElementNS(svgNS, "circle");
@@ -212,10 +210,10 @@ function initOverlay() {
         }
 
         isOnScreen(currentPov) {
-            const screenTopleft = this.pointToSphere(0, 0, currentPov.heading, currentPov.pitch);
-            const screenTopright = this.pointToSphere(this.canvasWidth, 0, currentPov.heading, currentPov.pitch);
-            const screenBottomleft = this.pointToSphere(0, this.canvasHeight, currentPov.heading, currentPov.pitch);
-            const screenBottomright = this.pointToSphere(this.canvasWidth, this.canvasHeight, currentPov.heading, currentPov.pitch);
+            const screenTopleft = this.pointToSphere(0, 0, currentPov.heading, currentPov.pitch, currentPov.zoom);
+            const screenTopright = this.pointToSphere(this.canvasWidth, 0, currentPov.heading, currentPov.pitch, currentPov.zoom);
+            const screenBottomleft = this.pointToSphere(0, this.canvasHeight, currentPov.heading, currentPov.pitch, currentPov.zoom);
+            const screenBottomright = this.pointToSphere(this.canvasWidth, this.canvasHeight, currentPov.heading, currentPov.pitch, currentPov.zoom);
 
             if(screenTopleft.phi > screenTopright.phi || screenTopleft.phi > screenBottomright.phi) {
                 screenTopleft.phi -= 2 * Math.PI;
@@ -260,10 +258,10 @@ function initOverlay() {
 
         calculateCurrentCoords(currentPov) {
 
-            const topleftCoords = this.getPointOnScreen(this.topleft.theta, this.topleft.phi, currentPov.heading, currentPov.pitch);
-            const toprightCoords = this.getPointOnScreen(this.topright.theta, this.topright.phi, currentPov.heading, currentPov.pitch);
-            const bottomrightCoords = this.getPointOnScreen(this.bottomright.theta, this.bottomright.phi, currentPov.heading, currentPov.pitch);
-            const bottomleftCoords = this.getPointOnScreen(this.bottomleft.theta, this.bottomleft.phi, currentPov.heading, currentPov.pitch);
+            const topleftCoords = this.getPointOnScreen(this.topleft.theta, this.topleft.phi, currentPov.heading, currentPov.pitch, currentPov.zoom);
+            const toprightCoords = this.getPointOnScreen(this.topright.theta, this.topright.phi, currentPov.heading, currentPov.pitch, currentPov.zoom);
+            const bottomrightCoords = this.getPointOnScreen(this.bottomright.theta, this.bottomright.phi, currentPov.heading, currentPov.pitch, currentPov.zoom);
+            const bottomleftCoords = this.getPointOnScreen(this.bottomleft.theta, this.bottomleft.phi, currentPov.heading, currentPov.pitch, currentPov.zoom);
             
             const xCoords = [topleftCoords.x, toprightCoords.x, bottomleftCoords.x, bottomrightCoords.x];
             const yCoords = [topleftCoords.y, toprightCoords.y, bottomleftCoords.y, bottomrightCoords.y];
@@ -284,11 +282,11 @@ function initOverlay() {
         }
 
         // Convert spherical coordinates to screen coordinates
-        getPointOnScreen(theta, phi, heading, pitch) {
+        getPointOnScreen(theta, phi, heading, pitch, zoom) {
             heading = this.toRadian(heading);
             pitch = this.toRadian(90 - pitch);
             phi = (phi - heading + 2 * Math.PI) % (2 * Math.PI);
-            const z = (this.canvasWidth / 2) / Math.tan(this.toRadian(127) / 2);
+            const z = (this.canvasWidth / 2) / Math.tan(this.toRadian(Math.atan(Math.pow(2,1-zoom))*360/Math.PI) / 2);
 
             const reversePitchCoords = this.sphericalRotateX(theta, phi, -pitch);
             const len = Math.sqrt(Math.pow(z / Math.cos(reversePitchCoords.theta), 2) - z * z);
@@ -300,7 +298,7 @@ function initOverlay() {
         }
 
         // Convert screen coordinates to spherical coordinates
-        pointToSphere(x, y, heading, pitch, width, height) {
+        pointToSphere(x, y, heading, pitch, zoom, width, height) {
             if(!width) {
                 width = this.canvasWidth;
             }
@@ -313,7 +311,7 @@ function initOverlay() {
             pitch = this.toRadian(90 - pitch);
 
             // focal length
-            const z = (width / 2) / Math.tan(this.toRadian(127) / 2);
+            const z = (width / 2) / Math.tan(this.toRadian(Math.atan(Math.pow(2,1-zoom))*360/Math.PI) / 2);
 
             // angle offset within the viewport
             let theta = Math.acos(z / Math.sqrt(x * x + y * y + z * z));
