@@ -215,6 +215,7 @@ function initOverlay() {
             const screenBottomleft = this.pointToSphere(0, this.canvasHeight, currentPov.heading, currentPov.pitch, currentPov.zoom);
             const screenBottomright = this.pointToSphere(this.canvasWidth, this.canvasHeight, currentPov.heading, currentPov.pitch, currentPov.zoom);
 
+            // Normalize the angles
             if(screenTopleft.phi > screenTopright.phi || screenTopleft.phi > screenBottomright.phi) {
                 screenTopleft.phi -= 2 * Math.PI;
             }
@@ -223,21 +224,60 @@ function initOverlay() {
             }
 
             const screenCoords = [screenTopleft, screenTopright, screenBottomright, screenBottomleft];
+
+            // Without normalization
             for(let i = 0; i < this.coords.length; i++) {
                 let inside = false;
- 
-                let p1 = screenCoords[0];
+
+                let p1 = screenCoords[0]; // Top Left coordinate
                 let p2;
                 const theta = this.coords[i].theta;
                 const phi = this.coords[i].phi;
                 for(let j = 1; j <= screenCoords.length; j++) {
+                    // Get the next point in the polygon
                     p2 = screenCoords[j % screenCoords.length];
 
+                    // Check if the point is above the minimum theta coordinate of the edge
                     if(theta > Math.min(p1.theta, p2.theta)) {
                         if(theta <= Math.max(p1.theta, p2.theta)) {
                             if(phi <= Math.max(p1.phi, p2.phi)) {
                                 const phi_intersection = ((theta - p1.theta) * (p2.phi - p1.phi)) / (p2.theta - p1.theta) + p1.phi;
-                                console.log(phi_intersection);
+                                // console.log(phi_intersection);
+                                // If the point is to the left of intersection, the point is inside the polygon
+                                if(phi <= phi_intersection) {
+                                    inside = !inside;
+                                }
+                            }
+                        }
+                    }
+
+                    p1 = p2;
+                }
+
+                if(inside) {
+                    return true;
+                }
+            }
+
+            // With normalization
+            for(let i = 0; i < this.coords.length; i++) {
+                let inside = false;
+
+                let p1 = screenCoords[0]; // Top Left coordinate
+                let p2;
+                const theta = this.coords[i].theta;
+                const phi = this.coords[i].phi - 2 * Math.PI;
+                for(let j = 1; j <= screenCoords.length; j++) {
+                    // Get the next point in the polygon
+                    p2 = screenCoords[j % screenCoords.length];
+
+                    // Check if the point is above the minimum theta coordinate of the edge
+                    if(theta > Math.min(p1.theta, p2.theta)) {
+                        if(theta <= Math.max(p1.theta, p2.theta)) {
+                            if(phi <= Math.max(p1.phi, p2.phi)) {
+                                const phi_intersection = ((theta - p1.theta) * (p2.phi - p1.phi)) / (p2.theta - p1.theta) + p1.phi;
+                                // console.log(phi_intersection);
+                                // If the point is to the left of intersection, the point is inside the polygon
                                 if(phi <= phi_intersection) {
                                     inside = !inside;
                                 }
