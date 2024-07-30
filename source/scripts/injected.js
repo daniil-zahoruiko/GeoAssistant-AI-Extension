@@ -61,7 +61,6 @@ async function updateCurrentBoundingBoxes() {
         .then((boundingBoxes) => {
             const pov = HiddenPanoramaManager.getPanorama().getPov();
             boundingBoxes[0].forEach(boundingBox => {
-                console.log(window.BoundingBoxOverlay);
                 const overlay = new BoundingBoxOverlay(boundingBox.coords[0], boundingBox.coords[1], boundingBox.coords[2], boundingBox.coords[3], pov.heading, pov.pitch, pov.zoom, boundingBox.cls);
                 overlay.setMap(ActivePanoramaManager.getPanorama());
             });
@@ -101,7 +100,8 @@ function initOverlay() {
         canvasHeight;
         cls;
         div;
-        contSVG;
+        circleWrapper;
+        circle;
 
         constructor(topleftx, toplefty, bottomrightx, bottomrighty, heading, pitch, zoom, cls) {
             super();
@@ -162,24 +162,20 @@ function initOverlay() {
             this.div.dataset.bottomrightPhi = this.bottomright.phi;
 
 
-            const svgNS = "http://www.w3.org/2000/svg";
-            const svg = document.createElementNS(svgNS, "svg");
-            //svg.setAttribute("width", this.div.style.width);
-            //svg.setAttribute("height", this.div.style.height);
+            this.circleWrapper = document.createElementNS("http://www.w3.org/2000/svg", "svg");
 
             // Create a circle element
-            const circle = document.createElementNS(svgNS, "circle");
-            circle.setAttribute("cx", "50%");
-            circle.setAttribute("cy", "50%");
-            circle.setAttribute("r", "10");
-            circle.setAttribute("stroke", "black");
-            circle.setAttribute("stroke-width", "2");
-            circle.setAttribute("fill", "red");
+            this.circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            this.circle.setAttribute("cx", "50%");
+            this.circle.setAttribute("cy", "50%");
+            this.circle.setAttribute("stroke", "black");
+            this.circle.setAttribute("stroke-width", "2");
+            this.circle.setAttribute("fill", "red");
 
             // Append the circle to the SVG
-            svg.appendChild(circle);
+            this.circleWrapper.appendChild(this.circle);
 
-            this.div.appendChild(svg);
+            this.div.appendChild(this.circleWrapper);
 
             const panes = this.getPanes();
             panes.overlayLayer.appendChild(this.div);
@@ -192,7 +188,6 @@ function initOverlay() {
                 const currentPov = this.getMap().getPov();
                 if(!this.isOnScreen(currentPov)) {
                     this.div.style.visibility = 'hidden';
-                    // this.contSVG.style.visibility = 'hidden';
                     return;
                 }
 
@@ -203,6 +198,12 @@ function initOverlay() {
                 this.div.style.top = `${newCoords.top}px`;
                 this.div.style.width = `${newCoords.width}px`;
                 this.div.style.height = `${newCoords.height}px`;
+
+                this.circleWrapper.setAttribute("width", newCoords.width);
+                this.circleWrapper.setAttribute("height", newCoords.height);
+
+                this.circle.setAttribute("r", Math.min(newCoords.width / 3, 15) );
+
             }
         }
 
