@@ -25,6 +25,7 @@ function clearBoundingBoxes() {
 
 async function updateAllBoundingBoxes()
 {
+    UIManager.disable();
     const data = await HiddenPanoramaManager.getEntireImageData();
     if(data !== null) {
         console.log(data);
@@ -41,11 +42,13 @@ async function updateAllBoundingBoxes()
                     overlay.setMap(ActivePanoramaManager.getPanorama());
                 });
             }
+            UIManager.enable();
         });
     }
 }
 
 async function updateCurrentBoundingBoxes() {
+    UIManager.disable();
     const data = await HiddenPanoramaManager.getCurrentImageData();
 
     if(data !== null) {
@@ -62,6 +65,7 @@ async function updateCurrentBoundingBoxes() {
                 const overlay = new BoundingBoxOverlay(boundingBox.coords[0], boundingBox.coords[1], boundingBox.coords[2], boundingBox.coords[3], pov.heading, pov.pitch, pov.zoom, boundingBox.cls);
                 overlay.setMap(ActivePanoramaManager.getPanorama());
             });
+            UIManager.enable();
             return Promise.resolve();
         });
     }
@@ -535,6 +539,14 @@ const UIManager = (function() {
         return logo;
     }
 
+    function mouseOutEffect(e) {
+        e.target.style.background = "linear-gradient(180deg, rgba(161, 155, 217, 0.6) 0%, rgba(161, 155, 217, 0) 50%, rgba(161, 155, 217, 0) 50%), rgba(86, 59, 154, 0.8)";
+    }
+
+    function mouseOverEffect(e) {
+        e.target.style.background = "linear-gradient(180deg, rgba(161, 155, 217, 0.6) 0%, rgba(161, 155, 217, 0) 50%, rgba(161, 155, 217, 0) 50%), rgba(86, 59, 154, 1)";
+    }
+
     function create360Button()
     {
         // Create a 360 button
@@ -550,13 +562,9 @@ const UIManager = (function() {
             updateAllBoundingBoxes();
         });
 
-        scan360Button.addEventListener('mouseover', () => {
-            scan360Button.style.background = "linear-gradient(180deg, rgba(161, 155, 217, 0.6) 0%, rgba(161, 155, 217, 0) 50%, rgba(161, 155, 217, 0) 50%), rgba(86, 59, 154, 1)";
-        });
+        scan360Button.addEventListener('mouseover', mouseOverEffect);
 
-        scan360Button.addEventListener('mouseout', () => {
-            scan360Button.style.background = "linear-gradient(180deg, rgba(161, 155, 217, 0.6) 0%, rgba(161, 155, 217, 0) 50%, rgba(161, 155, 217, 0) 50%), rgba(86, 59, 154, 0.8)";
-        });
+        scan360Button.addEventListener('mouseout', mouseOutEffect);
 
         return scan360Button
     }
@@ -576,13 +584,9 @@ const UIManager = (function() {
             updateCurrentBoundingBoxes();
         });
 
-        currentPOVButton.addEventListener('mouseover', () => {
-            currentPOVButton.style.background = "linear-gradient(180deg, rgba(161, 155, 217, 0.6) 0%, rgba(161, 155, 217, 0) 50%, rgba(161, 155, 217, 0) 50%), rgba(86, 59, 154, 1)";
-        });
+        currentPOVButton.addEventListener('mouseover', mouseOverEffect);
 
-        currentPOVButton.addEventListener('mouseout', () => {
-            currentPOVButton.style.background = "linear-gradient(180deg, rgba(161, 155, 217, 0.6) 0%, rgba(161, 155, 217, 0) 50%, rgba(161, 155, 217, 0) 50%), rgba(86, 59, 154, 0.8)";
-        });
+        currentPOVButton.addEventListener('mouseout', mouseOutEffect);
 
         return currentPOVButton;
     }
@@ -623,6 +627,24 @@ const UIManager = (function() {
             if (toggleWrapper) {
                 toggleWrapper.remove();
             }
+        },
+
+        disable: function() {
+            if (!toggleWrapper) return;
+            [...toggleWrapper.getElementsByTagName('button')].forEach(button => {
+                button.disabled = "disabled";
+                button.style.background = "linear-gradient(180deg, rgba(161, 155, 217, 0.6) 0%, rgba(161, 155, 217, 0) 50%, rgba(161, 155, 217, 0) 50%), rgba(86, 59, 154, 1)";
+                button.removeEventListener('mouseout', mouseOutEffect);
+            });
+        },
+
+        enable: function() {
+            if (!toggleWrapper) return;
+            [...toggleWrapper.getElementsByTagName('button')].forEach(button => {
+                button.disabled = "";
+                button.style.background = "linear-gradient(180deg, rgba(161, 155, 217, 0.6) 0%, rgba(161, 155, 217, 0) 50%, rgba(161, 155, 217, 0) 50%), rgba(86, 59, 154, 0.8)";
+                button.addEventListener('mouseout', mouseOutEffect);
+            });
         },
     }
 })();
