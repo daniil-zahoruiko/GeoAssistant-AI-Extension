@@ -151,6 +151,7 @@ function initOverlay() {
             this.div.style.borderColor = "red";
             this.div.style.borderWidth = "3px";
             this.div.style.position = "absolute";
+            this.div.style.pointerEvents = "none";
 
             this.div.dataset.topleftTheta = this.topleft.theta;
             this.div.dataset.topleftPhi = this.topleft.phi;
