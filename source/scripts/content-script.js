@@ -1,3 +1,7 @@
+chrome.runtime.onMessage.addListener(function(msg, sender, response){ 
+    window.dispatchEvent(new CustomEvent(msg.msg));
+});
+
 function fetchSVG() {
     const svgURL = chrome.runtime.getURL("images/logo.svg");
 

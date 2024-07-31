@@ -32,12 +32,12 @@ Mutex.prototype._execute = function(task) {
 const mutex = new Mutex();
 
 async function handleImageSave() {
-    await chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
+    await chrome.tabs.query({ active: true, lastFocusedWindow: true }, async (tabs) => {
         const tab = tabs[0];
         
         if(tab != null) {
             const tabId = tab.id;
-            // TODO: implement
+            await chrome.tabs.sendMessage(tabId, { msg: 'imgSave' });
         }
     });
     

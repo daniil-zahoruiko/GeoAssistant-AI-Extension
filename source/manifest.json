@@ -1,6 +1,6 @@
 {
  	"manifest_version": 3,
-	"name": "GeoGuessr Image  Extraction",
+	"name": "GeoGuessr Image Extraction",
 	"permissions": ["scripting", "activeTab", "webRequest", "storage", "tabs"],
 	"host_permissions": ["https://www.geoguessr.com/*", 
 						 "https://streetviewpixels-pa.googleapis.com/v1/*",

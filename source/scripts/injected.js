@@ -28,14 +28,12 @@ async function updateAllBoundingBoxes()
     UIManager.disable();
     const data = await HiddenPanoramaManager.getEntireImageData();
     if(data !== null) {
-        console.log(data);
-        fetch("http://127.0.0.1:5000/update", {
+        await fetch("http://127.0.0.1:5000/update", {
             method: "POST",
             mode: "cors",
             body: data
         }).then(data => data.json())
         .then((povScans) => {
-            console.log(povScans)
             for(let i = 0; i < povScans.length; i++) {
                 povScans[i].forEach(boundingBox => {
                     const overlay = new BoundingBoxOverlay(boundingBox.coords[0], boundingBox.coords[1], boundingBox.coords[2], boundingBox.coords[3], _360ScanPovs[i].heading, _360ScanPovs[i].pitch, _360ScanPovs[i].zoom, boundingBox.cls);
@@ -52,7 +50,6 @@ async function updateCurrentBoundingBoxes() {
     const data = await HiddenPanoramaManager.getCurrentImageData();
 
     if(data !== null) {
-        console.log(data);
         await fetch("http://127.0.0.1:5000/update", {
             method: "POST",
             mode: "cors",
@@ -494,6 +491,16 @@ const HiddenPanoramaManager = (function() {
     }
 })();
 
+
+window.addEventListener('imgSave', async (e) => {
+    const data = await HiddenPanoramaManager.getCurrentImageData();
+
+    await fetch("http://127.0.0.1:5000/imsave", {
+        method: "POST",
+        mode: "cors",
+        body: data
+    });
+});
 
 let logo = null;
 
