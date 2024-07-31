@@ -234,7 +234,6 @@ function initOverlay() {
             var that = this;
             function isPointWithinPolygon(phiOffset)
             {
-                // Without normalization
                 for(let i = 0; i < that.coords.length; i++) {
                     let inside = false;
 
@@ -271,6 +270,7 @@ function initOverlay() {
                 return false;
             }
 
+            // check with and without normalization
             return isPointWithinPolygon(0) || isPointWithinPolygon(2 * Math.PI);
         }
 
@@ -290,7 +290,6 @@ function initOverlay() {
             xCoords.sort((x, y) => x - y);
             yCoords.sort((x, y) => x - y);
 
-            // this needs to be adjusted, there's probably a couple of cases that we need to consider
             return {
                 left: xCoords[0],
                 top: yCoords[0],
