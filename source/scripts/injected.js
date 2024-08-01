@@ -536,9 +536,72 @@ window.addEventListener('message', function(event) {
 
 const UIManager = (function() {
     let toggleWrapper = null;
+    let scanningBanner = null;
 
     function createLogo() {
         return logo;
+    }
+
+    function createScanningBanner() {
+        scanningBanner = document.createElement('div');
+        const scanningBannerText = document.createElement('p');
+        scanningBannerText.innerText = 'Scanning';
+        scanningBanner.style.color = "green";
+        // scanningBanner.style.color = "rgb(86, 59, 154)";
+        scanningBanner.style.fontWeight = "bold";
+        const scanningLoaderWrapper = document.createElement('div');
+
+        const dot1 = document.createElement('p');
+        const dot2 = document.createElement('p');
+        const dot3 = document.createElement('p');
+        dot1.innerText = '.';
+        dot2.innerText = '.';
+        dot3.innerText = '.';
+        dot1.style.fontSize = "1.5rem";
+        dot2.style.fontSize = "1.5rem";
+        dot3.style.fontSize = "1.5rem";
+        dot1.style.margin = 'auto 0';
+        dot2.style.margin = 'auto 0';
+        dot3.style.margin = 'auto 0';
+
+        // Add id to the dots
+        dot1.id = 'dot1';
+        dot2.id = 'dot2';
+        dot3.id = 'dot3';
+        scanningLoaderWrapper.style.position = 'relative';
+        dot1.style.position = 'absolute';
+        dot2.style.position = 'absolute';
+        dot3.style.position = 'absolute';
+        dot1.style.bottom = '-1.5px';
+        dot2.style.bottom = '-1.5px';
+        dot3.style.bottom = '-1.5px';
+        dot1.style.left = '0';
+        dot2.style.left = '0.4rem';
+        dot3.style.left = '0.8rem';
+
+
+
+        scanningBanner.style.display = 'flex';
+        scanningBanner.style.flexDirection = 'row';
+        scanningBanner.style.gap = '0rem';
+        scanningBanner.style.alignItems = 'left';
+        scanningBanner.style.justifyContent = 'center';
+
+
+        scanningBannerText.style.margin = 'auto 0';
+
+        
+
+
+        scanningBanner.appendChild(scanningBannerText);
+        scanningLoaderWrapper.appendChild(dot1);
+        scanningLoaderWrapper.appendChild(dot2);
+        scanningLoaderWrapper.appendChild(dot3);
+        scanningBanner.appendChild(scanningLoaderWrapper);
+
+        scanningBanner.style.visibility = 'hidden';
+
+        return scanningBanner;
     }
 
     function mouseOutEffect(e) {
@@ -593,12 +656,82 @@ const UIManager = (function() {
         return currentPOVButton;
     }
 
+    let d1 = 1;
+    let d2 = 1;
+    let d3 = 1;
+    const max = 6;
+
+    let count1 = 4;
+    let count2 = 2;
+    let count3 = 0;
+    const step = 0.4;
+
+    let cancel = false;
+
+    function scanAnimation() {
+
+        //#region dot1
+        count1 += step;
+        count2 += step;
+        count3 += step;
+
+        const dot1 = document.getElementById("dot1");
+        if (d1) {
+            dot1.style.transform = `translateY(-${count1}px)`;
+        } else {
+            dot1.style.transform = `translateY(-${max - count1}px)`;
+        }
+        if (count1 >= max) {
+            d1 = !d1;
+            count1 = 0;
+        }
+        //#endregion dot1
+
+        //#region dot2
+        const dot2 = document.getElementById("dot2");
+        if (d2) {
+            dot2.style.transform = `translateY(-${count2}px)`;
+        } else {
+            dot2.style.transform = `translateY(-${max - count2}px)`;
+        }
+        if (count2 >= max) {
+            d2 = !d2;
+            count2 = 0;
+        }
+        //#endregion dot2
+
+        //#region dot3
+        const dot3 = document.getElementById("dot3");
+        if (d3) {
+            dot3.style.transform = `translateY(-${count3}px)`;
+        } else {
+            dot3.style.transform = `translateY(-${max - count3}px)`;
+        }
+        if (count3 >= max) {
+            d3 = !d3;
+            count3 = 0;
+        }
+        //#endregion dot3
+        if (cancel) {
+            cancel = false;
+            d1 = 1;
+            d2 = 1;
+            d3 = 1;
+            count1 = 4;
+            count2 = 2;
+            count3 = 0;
+            return;
+        }
+        window.requestAnimationFrame(scanAnimation);
+      }
+
     return {
         initUI: function() {
 
             const scan360Button = create360Button();
             const currentPOVButton = createCurrentPOVButton();
             const logo = createLogo();
+            scanningBanner = createScanningBanner();
 
             toggleWrapper = document.createElement('div');
             toggleWrapper.style.position = 'absolute';
@@ -613,6 +746,7 @@ const UIManager = (function() {
             toggleWrapper.appendChild(logo);
             toggleWrapper.appendChild(scan360Button);
             toggleWrapper.appendChild(currentPOVButton);
+            toggleWrapper.appendChild(scanningBanner);
 
             document.body.appendChild(toggleWrapper);
         },
@@ -632,6 +766,8 @@ const UIManager = (function() {
         },
 
         disable: function() {
+            scanningBanner.style.visibility = 'visible';
+            window.requestAnimationFrame(scanAnimation);
             if (!toggleWrapper) return;
             [...toggleWrapper.getElementsByTagName('button')].forEach(button => {
                 button.disabled = "disabled";
@@ -641,6 +777,8 @@ const UIManager = (function() {
         },
 
         enable: function() {
+            scanningBanner.style.visibility = 'hidden';
+            cancel = true;
             if (!toggleWrapper) return;
             [...toggleWrapper.getElementsByTagName('button')].forEach(button => {
                 button.disabled = "";
