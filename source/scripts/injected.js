@@ -28,14 +28,12 @@ async function updateAllBoundingBoxes()
     UIManager.disable();
     const data = await HiddenPanoramaManager.getEntireImageData();
     if(data !== null) {
-        console.log(data);
-        fetch("http://127.0.0.1:5000/update", {
+        await fetch("http://127.0.0.1:5000/update", {
             method: "POST",
             mode: "cors",
             body: data
         }).then(data => data.json())
         .then((povScans) => {
-            console.log(povScans)
             for(let i = 0; i < povScans.length; i++) {
                 povScans[i].forEach(boundingBox => {
                     const overlay = new BoundingBoxOverlay(boundingBox.coords[0], boundingBox.coords[1], boundingBox.coords[2], boundingBox.coords[3], _360ScanPovs[i].heading, _360ScanPovs[i].pitch, _360ScanPovs[i].zoom, boundingBox.cls);
@@ -52,7 +50,6 @@ async function updateCurrentBoundingBoxes() {
     const data = await HiddenPanoramaManager.getCurrentImageData();
 
     if(data !== null) {
-        console.log(data);
         await fetch("http://127.0.0.1:5000/update", {
             method: "POST",
             mode: "cors",
@@ -231,75 +228,47 @@ function initOverlay() {
 
             const screenCoords = [screenTopleft, screenTopright, screenBottomright, screenBottomleft];
 
-            // Without normalization
-            for(let i = 0; i < this.coords.length; i++) {
-                let inside = false;
+            var that = this;
+            function isPointWithinPolygon(phiOffset)
+            {
+                for(let i = 0; i < that.coords.length; i++) {
+                    let inside = false;
 
-                let p1 = screenCoords[0]; // Top Left coordinate
-                let p2;
-                const theta = this.coords[i].theta;
-                const phi = this.coords[i].phi;
-                for(let j = 1; j <= screenCoords.length; j++) {
-                    // Get the next point in the polygon
-                    p2 = screenCoords[j % screenCoords.length];
+                    let p1 = screenCoords[0]; // Top Left coordinate
+                    let p2;
+                    const theta = that.coords[i].theta;
+                    const phi = that.coords[i].phi - phiOffset;
+                    for(let j = 1; j <= screenCoords.length; j++) {
+                        // Get the next point in the polygon
+                        p2 = screenCoords[j % screenCoords.length];
 
-                    // Check if the point is above the minimum theta coordinate of the edge
-                    if(theta > Math.min(p1.theta, p2.theta)) {
-                        if(theta <= Math.max(p1.theta, p2.theta)) {
-                            if(phi <= Math.max(p1.phi, p2.phi)) {
-                                const phi_intersection = ((theta - p1.theta) * (p2.phi - p1.phi)) / (p2.theta - p1.theta) + p1.phi;
-                                // console.log(phi_intersection);
-                                // If the point is to the left of intersection, the point is inside the polygon
-                                if(phi <= phi_intersection) {
-                                    inside = !inside;
+                        // Check if the point is above the minimum theta coordinate of the edge
+                        if(theta > Math.min(p1.theta, p2.theta)) {
+                            if(theta <= Math.max(p1.theta, p2.theta)) {
+                                if(phi <= Math.max(p1.phi, p2.phi)) {
+                                    const phi_intersection = ((theta - p1.theta) * (p2.phi - p1.phi)) / (p2.theta - p1.theta) + p1.phi;
+                                    // console.log(phi_intersection);
+                                    // If the point is to the left of intersection, the point is inside the polygon
+                                    if(phi <= phi_intersection) {
+                                        inside = !inside;
+                                    }
                                 }
                             }
                         }
+
+                        p1 = p2;
                     }
 
-                    p1 = p2;
-                }
-
-                if(inside) {
-                    return true;
-                }
-            }
-
-            // With normalization
-            for(let i = 0; i < this.coords.length; i++) {
-                let inside = false;
-
-                let p1 = screenCoords[0]; // Top Left coordinate
-                let p2;
-                const theta = this.coords[i].theta;
-                const phi = this.coords[i].phi - 2 * Math.PI;
-                for(let j = 1; j <= screenCoords.length; j++) {
-                    // Get the next point in the polygon
-                    p2 = screenCoords[j % screenCoords.length];
-
-                    // Check if the point is above the minimum theta coordinate of the edge
-                    if(theta > Math.min(p1.theta, p2.theta)) {
-                        if(theta <= Math.max(p1.theta, p2.theta)) {
-                            if(phi <= Math.max(p1.phi, p2.phi)) {
-                                const phi_intersection = ((theta - p1.theta) * (p2.phi - p1.phi)) / (p2.theta - p1.theta) + p1.phi;
-                                // console.log(phi_intersection);
-                                // If the point is to the left of intersection, the point is inside the polygon
-                                if(phi <= phi_intersection) {
-                                    inside = !inside;
-                                }
-                            }
-                        }
+                    if(inside) {
+                        return true;
                     }
-
-                    p1 = p2;
                 }
 
-                if(inside) {
-                    return true;
-                }
+                return false;
             }
 
-            return false;
+            // check with and without normalization
+            return isPointWithinPolygon(0) || isPointWithinPolygon(2 * Math.PI);
         }
 
         calculateCurrentCoords(currentPov) {
@@ -318,7 +287,6 @@ function initOverlay() {
             xCoords.sort((x, y) => x - y);
             yCoords.sort((x, y) => x - y);
 
-            // this needs to be adjusted, there's probably a couple of cases that we need to consider
             return {
                 left: xCoords[0],
                 top: yCoords[0],
@@ -523,6 +491,16 @@ const HiddenPanoramaManager = (function() {
     }
 })();
 
+
+window.addEventListener('imgSave', async (e) => {
+    const data = await HiddenPanoramaManager.getCurrentImageData();
+
+    await fetch("http://127.0.0.1:5000/imsave", {
+        method: "POST",
+        mode: "cors",
+        body: data
+    });
+});
 
 let logo = null;
 
