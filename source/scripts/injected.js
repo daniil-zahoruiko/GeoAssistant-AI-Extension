@@ -23,6 +23,30 @@ function clearBoundingBoxes() {
     document.querySelectorAll('[class*="boundingBox"]').forEach(el => el.remove());
 }
 
+//#region Listeners
+window.addEventListener('imgSave', async (e) => {
+    const data = await HiddenPanoramaManager.getCurrentImageData();
+
+    await fetch("http://127.0.0.1:5000/imsave", {
+        method: "POST",
+        mode: "cors",
+        body: data
+    });
+});
+
+let logo = null;
+
+// Listen for the SVG content
+window.addEventListener('message', function(event) {
+    if (event.data && event.data.type === 'SEND_SVG') {
+        logo = document.createElement('div');
+        logo.innerHTML = event.data.svgContent;
+    }
+});
+
+//#endregion Listeners
+
+//#region Fetch bounding boxes
 async function updateAllBoundingBoxes()
 {
     UIManager.disable();
@@ -67,6 +91,8 @@ async function updateCurrentBoundingBoxes() {
     }
 }
 
+//#endregion Fetch bounding boxes
+
 function initStreetView() {
     google.maps.StreetViewPanorama = class extends google.maps.StreetViewPanorama {
         constructor(...args) {
@@ -79,6 +105,7 @@ function initStreetView() {
     }
 }
 
+//#region Overlay
 function initOverlay() {
     class SpherePoint {
         // we only have theta and phi here since r can be calculated as focal length, and in most cases we just need theta and phi
@@ -277,12 +304,9 @@ function initOverlay() {
             const toprightCoords = this.getPointOnScreen(this.topright.theta, this.topright.phi, currentPov.heading, currentPov.pitch, currentPov.zoom);
             const bottomrightCoords = this.getPointOnScreen(this.bottomright.theta, this.bottomright.phi, currentPov.heading, currentPov.pitch, currentPov.zoom);
             const bottomleftCoords = this.getPointOnScreen(this.bottomleft.theta, this.bottomleft.phi, currentPov.heading, currentPov.pitch, currentPov.zoom);
-            
+
             const xCoords = [topleftCoords.x, toprightCoords.x, bottomleftCoords.x, bottomrightCoords.x];
             const yCoords = [topleftCoords.y, toprightCoords.y, bottomleftCoords.y, bottomrightCoords.y];
-            
-            // console.log(xCoords);
-            // console.log(yCoords);
 
             xCoords.sort((x, y) => x - y);
             yCoords.sort((x, y) => x - y);
@@ -359,6 +383,9 @@ function initOverlay() {
     }
 }
 
+//#endregion Overlay
+
+//#region Managers
 const ActivePanoramaManager = (function() {
     let panorama = null;
 
@@ -376,21 +403,6 @@ const ActivePanoramaManager = (function() {
 const HiddenPanoramaManager = (function() {
     let panorama = null;
     let panoramaContainer = null;
-
-    function dataURLtoBlob(dataURL) {
-        let array, binary, i, len;
-        binary = atob(dataURL.split(',')[1]);
-        array = [];
-        i = 0;
-        len = binary.length;
-        while (i < len) {
-            array.push(binary.charCodeAt(i));
-            i++;
-        }
-        return new Blob([new Uint8Array(array)], {
-            type: 'image/png'
-        });
-    }
 
     function getCanvasElement() {
         if(panoramaContainer) {
@@ -491,27 +503,6 @@ const HiddenPanoramaManager = (function() {
     }
 })();
 
-
-window.addEventListener('imgSave', async (e) => {
-    const data = await HiddenPanoramaManager.getCurrentImageData();
-
-    await fetch("http://127.0.0.1:5000/imsave", {
-        method: "POST",
-        mode: "cors",
-        body: data
-    });
-});
-
-let logo = null;
-
-// Listen for the SVG content
-window.addEventListener('message', function(event) {
-    if (event.data && event.data.type === 'SEND_SVG') {
-        logo = document.createElement('div');
-        logo.innerHTML = event.data.svgContent;
-    }
-});
-
 const UIManager = (function() {
     let toggleWrapper = null;
     let scanningBanner = null;
@@ -522,16 +513,28 @@ const UIManager = (function() {
 
     function createScanningBanner() {
         scanningBanner = document.createElement('div');
+        scanningBanner.style.color = "green";
+        scanningBanner.style.fontWeight = "bold";
+        scanningBanner.style.display = 'flex';
+        scanningBanner.style.flexDirection = 'row';
+        scanningBanner.style.gap = '0rem';
+        scanningBanner.style.alignItems = 'left';
+        scanningBanner.style.justifyContent = 'center';
+        scanningBanner.style.visibility = 'hidden';
+
         const scanningBannerText = document.createElement('p');
         scanningBannerText.innerText = 'Scanning';
-        scanningBanner.style.color = "green";
-        // scanningBanner.style.color = "rgb(86, 59, 154)";
-        scanningBanner.style.fontWeight = "bold";
+        scanningBannerText.style.margin = 'auto 0';
+
         const scanningLoaderWrapper = document.createElement('div');
+        scanningLoaderWrapper.style.position = 'relative';
 
         const dot1 = document.createElement('p');
         const dot2 = document.createElement('p');
         const dot3 = document.createElement('p');
+        dot1.id = 'dot1';
+        dot2.id = 'dot2';
+        dot3.id = 'dot3';
         dot1.innerText = '.';
         dot2.innerText = '.';
         dot3.innerText = '.';
@@ -541,12 +544,6 @@ const UIManager = (function() {
         dot1.style.margin = 'auto 0';
         dot2.style.margin = 'auto 0';
         dot3.style.margin = 'auto 0';
-
-        // Add id to the dots
-        dot1.id = 'dot1';
-        dot2.id = 'dot2';
-        dot3.id = 'dot3';
-        scanningLoaderWrapper.style.position = 'relative';
         dot1.style.position = 'absolute';
         dot2.style.position = 'absolute';
         dot3.style.position = 'absolute';
@@ -557,27 +554,12 @@ const UIManager = (function() {
         dot2.style.left = '0.4rem';
         dot3.style.left = '0.8rem';
 
-
-
-        scanningBanner.style.display = 'flex';
-        scanningBanner.style.flexDirection = 'row';
-        scanningBanner.style.gap = '0rem';
-        scanningBanner.style.alignItems = 'left';
-        scanningBanner.style.justifyContent = 'center';
-
-
-        scanningBannerText.style.margin = 'auto 0';
-
-        
-
-
-        scanningBanner.appendChild(scanningBannerText);
         scanningLoaderWrapper.appendChild(dot1);
         scanningLoaderWrapper.appendChild(dot2);
         scanningLoaderWrapper.appendChild(dot3);
-        scanningBanner.appendChild(scanningLoaderWrapper);
 
-        scanningBanner.style.visibility = 'hidden';
+        scanningBanner.appendChild(scanningBannerText);
+        scanningBanner.appendChild(scanningLoaderWrapper);
 
         return scanningBanner;
     }
@@ -634,25 +616,29 @@ const UIManager = (function() {
         return currentPOVButton;
     }
 
+    // Direction of the dots(1 - up, 0 - down)
     let d1 = 1;
     let d2 = 1;
     let d3 = 1;
-    const max = 6;
 
+    // Initial translation values(in px)
     let count1 = 4;
     let count2 = 2;
     let count3 = 0;
+
+    const max = 6;
     const step = 0.4;
 
+    // Cancel flag
     let cancel = false;
 
     function scanAnimation() {
 
-        //#region dot1
         count1 += step;
         count2 += step;
         count3 += step;
 
+        // dot1
         const dot1 = document.getElementById("dot1");
         if (d1) {
             dot1.style.transform = `translateY(-${count1}px)`;
@@ -663,9 +649,8 @@ const UIManager = (function() {
             d1 = !d1;
             count1 = 0;
         }
-        //#endregion dot1
 
-        //#region dot2
+        // dot2
         const dot2 = document.getElementById("dot2");
         if (d2) {
             dot2.style.transform = `translateY(-${count2}px)`;
@@ -676,9 +661,7 @@ const UIManager = (function() {
             d2 = !d2;
             count2 = 0;
         }
-        //#endregion dot2
-
-        //#region dot3
+        // dot3
         const dot3 = document.getElementById("dot3");
         if (d3) {
             dot3.style.transform = `translateY(-${count3}px)`;
@@ -689,12 +672,11 @@ const UIManager = (function() {
             d3 = !d3;
             count3 = 0;
         }
-        //#endregion dot3
+
+        // If the cancel flag is set, reset the values and return
         if (cancel) {
             cancel = false;
-            d1 = 1;
-            d2 = 1;
-            d3 = 1;
+            d1 = d2 = d3 = 1;
             count1 = 4;
             count2 = 2;
             count3 = 0;
@@ -767,6 +749,9 @@ const UIManager = (function() {
     }
 })();
 
+//#endregion Managers
+
+//#region Injected code
 (function () {
     // Request SVG content from content_script.js
     window.postMessage({ type: 'REQUEST_SVG' }, '*');
@@ -821,3 +806,5 @@ const UIManager = (function() {
     initialisationObserver.observe(document.head, {childList: true, subtree: true});
 
 })();
+
+//#endregion Injected code
