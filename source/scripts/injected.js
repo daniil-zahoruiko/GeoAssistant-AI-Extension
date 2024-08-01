@@ -459,8 +459,8 @@ const HiddenPanoramaManager = (function() {
                 const imageData = new FormData();
                 for(let i = 0; i < _360ScanPovs.length; i++) {
                     await setPovDelayed(_360ScanPovs[i]);
-                    const dataUrl = await canvas.toDataURL();
-                    imageData.append('data' + i, dataURLtoBlob(dataUrl));
+                    const dataBlob = await new Promise(resolve => canvas.toBlob(resolve));
+                    imageData.append('data' + i, dataBlob);
                 };
                 return imageData;
             }
@@ -474,8 +474,8 @@ const HiddenPanoramaManager = (function() {
             const canvas = getCanvasElement();
             if(canvas) {
                 const result = new FormData();
-                const dataUrl = await canvas.toDataURL();
-                result.append('data', dataURLtoBlob(dataUrl));
+                const dataBlob = await new Promise(resolve => canvas.toBlob(resolve))
+                result.append('data', dataBlob);
 
                 return result;
             }
