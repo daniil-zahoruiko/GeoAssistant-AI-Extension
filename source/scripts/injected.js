@@ -64,7 +64,14 @@ window.addEventListener('message', function(event) {
 async function updateAllBoundingBoxes()
 {
     UIManager.disable();
+    const pano = ActivePanoramaManager.getPanorama().getPano();
     const data = await HiddenPanoramaManager.getEntireImageData();
+
+    if(pano !== ActivePanoramaManager.getPanorama().getPano()) {
+        UIManager.enable();
+        return;
+    }
+
     if(data !== null) {
         await fetch("http://127.0.0.1:5000/update", {
             method: "POST",
@@ -72,11 +79,13 @@ async function updateAllBoundingBoxes()
             body: data
         }).then(data => data.json())
         .then((povScans) => {
-            for(let i = 0; i < povScans.length; i++) {
-                povScans[i].forEach(boundingBox => {
-                    const overlay = new BoundingBoxOverlay(boundingBox.coords[0], boundingBox.coords[1], boundingBox.coords[2], boundingBox.coords[3], _360ScanPovs[i].heading, _360ScanPovs[i].pitch, _360ScanPovs[i].zoom, boundingBox.cls);
-                    overlay.setMap(ActivePanoramaManager.getPanorama());
-                });
+            if(pano === ActivePanoramaManager.getPanorama().getPano()) {
+                for(let i = 0; i < povScans.length; i++) {
+                    povScans[i].forEach(boundingBox => {
+                        const overlay = new BoundingBoxOverlay(boundingBox.coords[0], boundingBox.coords[1], boundingBox.coords[2], boundingBox.coords[3], _360ScanPovs[i].heading, _360ScanPovs[i].pitch, _360ScanPovs[i].zoom, boundingBox.cls);
+                        overlay.setMap(ActivePanoramaManager.getPanorama());
+                    });
+                }
             }
             UIManager.enable();
         });
@@ -85,7 +94,13 @@ async function updateAllBoundingBoxes()
 
 async function updateCurrentBoundingBoxes() {
     UIManager.disable();
+    const pano = ActivePanoramaManager.getPanorama().getPano();
     const data = await HiddenPanoramaManager.getCurrentImageData();
+
+    if(pano !== ActivePanoramaManager.getPanorama().getPano()) {
+        UIManager.enable();
+        return;
+    }
 
     if(data !== null) {
         await fetch("http://127.0.0.1:5000/update", {
@@ -94,11 +109,13 @@ async function updateCurrentBoundingBoxes() {
             body: data
         }).then(data => data.json())
         .then((boundingBoxes) => {
-            const pov = HiddenPanoramaManager.getPanorama().getPov();
-            boundingBoxes[0].forEach(boundingBox => {
-                const overlay = new BoundingBoxOverlay(boundingBox.coords[0], boundingBox.coords[1], boundingBox.coords[2], boundingBox.coords[3], pov.heading, pov.pitch, pov.zoom, boundingBox.cls);
-                overlay.setMap(ActivePanoramaManager.getPanorama());
-            });
+            if(pano === ActivePanoramaManager.getPanorama().getPano()) {
+                const pov = HiddenPanoramaManager.getPanorama().getPov();
+                boundingBoxes[0].forEach(boundingBox => {
+                    const overlay = new BoundingBoxOverlay(boundingBox.coords[0], boundingBox.coords[1], boundingBox.coords[2], boundingBox.coords[3], pov.heading, pov.pitch, pov.zoom, boundingBox.cls);
+                    overlay.setMap(ActivePanoramaManager.getPanorama());
+                });
+            }
             UIManager.enable();
             return Promise.resolve();
         });
@@ -279,9 +296,6 @@ function initOverlay() {
                     screenBottomright.phi -= 2 * Math.PI;
                 }
             }
-
-            console.log(screenTopright);
-            console.log(screenBottomright);
 
             // Normalize the angles of the left edge
             if(screenTopleft.phi > screenTopright.phi || screenTopleft.phi > screenBottomright.phi) {
