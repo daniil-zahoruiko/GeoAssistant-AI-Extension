@@ -230,6 +230,8 @@ function initOverlay() {
             this.refreshCanvasSize();
             if (this.div) {
                 const currentPov = this.getMap().getPov();
+                console.log(this.isOnScreen(currentPov));
+
                 if(!this.isOnScreen(currentPov)) {
                     this.div.style.visibility = 'hidden';
                     this.circleWrapper.style.visibility = 'hidden';
@@ -267,8 +269,21 @@ function initOverlay() {
             const screenTopright = this.pointToSphere(this.canvasWidth, 0, currentPov.heading, currentPov.pitch, currentPov.zoom);
             const screenBottomleft = this.pointToSphere(0, this.canvasHeight, currentPov.heading, currentPov.pitch, currentPov.zoom);
             const screenBottomright = this.pointToSphere(this.canvasWidth, this.canvasHeight, currentPov.heading, currentPov.pitch, currentPov.zoom);
+            
+            // Normalize the right edge
+            if(Math.abs(screenTopright.phi - screenBottomright.phi) > Math.abs(Math.abs(screenTopright.phi - screenBottomright.phi) - 2 * Math.PI)) {
+                if(screenTopright.phi > screenBottomright.phi) {
+                    screenTopright.phi -= 2 * Math.PI;
+                }
+                else {
+                    screenBottomright.phi -= 2 * Math.PI;
+                }
+            }
 
-            // Normalize the angles
+            console.log(screenTopright);
+            console.log(screenBottomright);
+
+            // Normalize the angles of the left edge
             if(screenTopleft.phi > screenTopright.phi || screenTopleft.phi > screenBottomright.phi) {
                 screenTopleft.phi -= 2 * Math.PI;
             }
