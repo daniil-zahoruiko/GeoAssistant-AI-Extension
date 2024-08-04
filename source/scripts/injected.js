@@ -21,6 +21,7 @@ function handlePanoChanged(panorama) {
 
 function clearBoundingBoxes() {
     document.querySelectorAll('[class*="boundingBox"]').forEach(el => el.remove());
+    document.querySelectorAll('[class*="circle"]').forEach(el => el.remove());
 }
 
 //#region Listeners
@@ -32,6 +33,19 @@ window.addEventListener('imgSave', async (e) => {
         mode: "cors",
         body: data
     });
+});
+
+
+let preferences = { rect: true, dot: true };
+
+window.addEventListener('preferencesLoaded', (e) => {
+    preferences = e.detail;
+});
+
+window.addEventListener('preferencesChanged', (e) => {
+    preferences = e.detail;
+    document.querySelectorAll('[class*="boundingBox"]').forEach(el => el.style.visibility = preferences.rect ? 'visible' : 'hidden');
+    document.querySelectorAll('[class*="circle"]').forEach(el => el.style.visibility = preferences.dot ? 'visible' : 'hidden');
 });
 
 let logo = null;
@@ -146,6 +160,7 @@ function initOverlay() {
             const limit = 0.2
 
             const className = `boundingBox${this.cls}`;
+            const circleClassName = `circle${this.cls}`;
             const boundingBoxes = document.getElementsByClassName(className);
             for(let i = 0; i < boundingBoxes.length; i++) {
                 let maxThetaDiff = 0, maxPhiDiff = 0;
@@ -177,6 +192,8 @@ function initOverlay() {
             this.div.style.position = "absolute";
             this.div.style.pointerEvents = "none";
 
+            this.div.style.visibility = preferences.rect ? 'visible' : 'hidden';
+
             this.div.dataset.topleftTheta = this.topleft.theta;
             this.div.dataset.topleftPhi = this.topleft.phi;
             this.div.dataset.toprightTheta = this.topright.theta;
@@ -188,6 +205,9 @@ function initOverlay() {
 
 
             this.circleWrapper = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            this.circleWrapper.classList.add(circleClassName);
+            this.circleWrapper.style.visibility = preferences.dot ? 'visible' : 'hidden';
+            this.circleWrapper.style.position = "absolute";
 
             // Create a circle element
             this.circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
@@ -200,10 +220,9 @@ function initOverlay() {
             // Append the circle to the SVG
             this.circleWrapper.appendChild(this.circle);
 
-            this.div.appendChild(this.circleWrapper);
-
             const panes = this.getPanes();
             panes.overlayLayer.appendChild(this.div);
+            panes.overlayLayer.appendChild(this.circleWrapper);
         }
 
         draw() {
@@ -213,12 +232,14 @@ function initOverlay() {
                 const currentPov = this.getMap().getPov();
                 if(!this.isOnScreen(currentPov)) {
                     this.div.style.visibility = 'hidden';
+                    this.circleWrapper.style.visibility = 'hidden';
                     return;
                 }
 
                 const newCoords = this.calculateCurrentCoords(currentPov);
 
-                this.div.style.visibility = 'visible';
+                this.div.style.visibility = preferences.rect ? 'visible' : 'hidden';
+                this.circleWrapper.style.visibility = preferences.dot ? 'visible' : 'hidden';
                 this.div.style.left = `${newCoords.left}px`;
                 this.div.style.top = `${newCoords.top}px`;
                 this.div.style.width = `${newCoords.width}px`;
@@ -227,8 +248,10 @@ function initOverlay() {
                 this.circleWrapper.setAttribute("width", newCoords.width);
                 this.circleWrapper.setAttribute("height", newCoords.height);
 
-                this.circle.setAttribute("r", Math.min(newCoords.width / 3, 15) );
+                this.circleWrapper.style.left = `${newCoords.left}px`;
+                this.circleWrapper.style.top = `${newCoords.top}px`;
 
+                this.circle.setAttribute("r", Math.min(newCoords.width / 3, 15) );
             }
         }
 
@@ -755,6 +778,7 @@ const UIManager = (function() {
 (function () {
     // Request SVG content from content_script.js
     window.postMessage({ type: 'REQUEST_SVG' }, '*');
+    window.postMessage({ type: 'REQUEST_PREFERENCES' }, '*');
 
     // Disable scrolling
     document.documentElement.style.overflow = 'hidden';
