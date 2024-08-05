@@ -305,7 +305,7 @@ function initOverlay() {
                 this.div.style.height = `${newCoords.height}px`;
 
                 this.circleWrapper.setAttribute("width", Math.max(newCoords.width, 15));
-                this.circleWrapper.setAttribute("height", newCoords.height);
+                this.circleWrapper.setAttribute("height", Math.max(newCoords.height, 15));
 
                 this.circleWrapper.style.left = `${newCoords.left}px`;
                 this.circleWrapper.style.top = `${newCoords.top}px`;
