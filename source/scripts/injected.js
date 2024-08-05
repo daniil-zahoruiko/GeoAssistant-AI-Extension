@@ -232,7 +232,7 @@ function initOverlay() {
 
 
             this.circleWrapper = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-            this.circleWrapper.style.opacity = "0.7";
+            this.circleWrapper.style.opacity = "0.8";
             // Define the blur filter
             const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
 
