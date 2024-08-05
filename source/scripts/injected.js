@@ -59,12 +59,11 @@ window.addEventListener('preferencesChanged', (e) => {
         el.style.visibility = preferences.dot ? 'visible' : 'hidden'});
 });
 
-let logo = null;
+let logo = document.createElement('div');
 
 // Listen for the SVG content
 window.addEventListener('message', function(event) {
     if (event.data && event.data.type === 'SEND_SVG') {
-        logo = document.createElement('div');
         logo.innerHTML = event.data.svgContent;
     }
 });
@@ -280,13 +279,13 @@ function initOverlay() {
                 this.div.style.width = `${newCoords.width}px`;
                 this.div.style.height = `${newCoords.height}px`;
 
-                this.circleWrapper.setAttribute("width", newCoords.width);
+                this.circleWrapper.setAttribute("width", Math.max(newCoords.width, 16));
                 this.circleWrapper.setAttribute("height", newCoords.height);
 
                 this.circleWrapper.style.left = `${newCoords.left}px`;
                 this.circleWrapper.style.top = `${newCoords.top}px`;
 
-                this.circle.setAttribute("r", Math.min(newCoords.width / 3, 15) );
+                this.circle.setAttribute("r", Math.max(Math.min(newCoords.width / 3, 15),6) );
             }
         }
 
