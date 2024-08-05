@@ -44,8 +44,19 @@ window.addEventListener('preferencesLoaded', (e) => {
 
 window.addEventListener('preferencesChanged', (e) => {
     preferences = e.detail;
-    document.querySelectorAll('[class*="boundingBox"]').forEach(el => el.style.visibility = preferences.rect ? 'visible' : 'hidden');
-    document.querySelectorAll('[class*="circle"]').forEach(el => el.style.visibility = preferences.dot ? 'visible' : 'hidden');
+    document.querySelectorAll('[class*="boundingBox"]').forEach(el => {
+        if (el.classList.contains("hidden")) {
+            console.log('hidden');
+            return;
+        }
+        el.style.visibility = preferences.rect ? 'visible' : 'hidden'
+    });
+    document.querySelectorAll('[class*="circle"]').forEach(el => {
+        if (el.classList.contains("hidden")) {
+            console.log('hidden');
+            return;
+        }
+        el.style.visibility = preferences.dot ? 'visible' : 'hidden'});
 });
 
 let logo = null;
@@ -252,10 +263,15 @@ function initOverlay() {
                 if(!this.isOnScreen(currentPov)) {
                     this.div.style.visibility = 'hidden';
                     this.circleWrapper.style.visibility = 'hidden';
+                    this.div.classList.add('hidden');
+                    this.circleWrapper.classList.add('hidden');
                     return;
                 }
 
                 const newCoords = this.calculateCurrentCoords(currentPov);
+
+                this.div.classList.remove('hidden');
+                this.circleWrapper.classList.remove('hidden');
 
                 this.div.style.visibility = preferences.rect ? 'visible' : 'hidden';
                 this.circleWrapper.style.visibility = preferences.dot ? 'visible' : 'hidden';
