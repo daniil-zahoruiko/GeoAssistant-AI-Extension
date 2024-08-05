@@ -232,6 +232,30 @@ function initOverlay() {
 
 
             this.circleWrapper = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            this.circleWrapper.style.opacity = "0.7";
+            // Define the blur filter
+            const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+
+            const filter = document.createElementNS("http://www.w3.org/2000/svg", "filter");
+            filter.setAttribute("id", "blur");
+
+            const feGaussianBlur = document.createElementNS("http://www.w3.org/2000/svg", "feGaussianBlur");
+            feGaussianBlur.setAttribute("in", "SourceGraphic");
+            feGaussianBlur.setAttribute("stdDeviation", 1.5);
+
+            const feComposite = document.createElementNS("http://www.w3.org/2000/svg", "feComposite");
+            feComposite.setAttribute("operator", "in");
+            feComposite.setAttribute("in2", "SourceGraphic");
+
+            filter.appendChild(feGaussianBlur);
+            filter.appendChild(feComposite);
+            defs.appendChild(filter);
+
+            this.circleWrapper.appendChild(defs);
+
+
+
+
             this.circleWrapper.classList.add(circleClassName);
             this.circleWrapper.style.visibility = preferences.dot ? 'visible' : 'hidden';
             this.circleWrapper.style.position = "absolute";
@@ -243,6 +267,7 @@ function initOverlay() {
             this.circle.setAttribute("stroke", "black");
             this.circle.setAttribute("stroke-width", "2");
             this.circle.setAttribute("fill", "red");
+            this.circle.setAttribute("filter", "url(#blur)");
 
             // Append the circle to the SVG
             this.circleWrapper.appendChild(this.circle);
@@ -279,13 +304,13 @@ function initOverlay() {
                 this.div.style.width = `${newCoords.width}px`;
                 this.div.style.height = `${newCoords.height}px`;
 
-                this.circleWrapper.setAttribute("width", Math.max(newCoords.width, 16));
+                this.circleWrapper.setAttribute("width", Math.max(newCoords.width, 15));
                 this.circleWrapper.setAttribute("height", newCoords.height);
 
                 this.circleWrapper.style.left = `${newCoords.left}px`;
                 this.circleWrapper.style.top = `${newCoords.top}px`;
 
-                this.circle.setAttribute("r", Math.max(Math.min(newCoords.width / 3, 15),6) );
+                this.circle.setAttribute("r", Math.max(Math.min(newCoords.width / 3, 15), 7) );
             }
         }
 
@@ -397,8 +422,8 @@ function initOverlay() {
             const len = Math.sqrt(Math.pow(z / Math.cos(reversePitchCoords.theta), 2) - z * z);
 
             return {
-                x: Math.cos(reversePitchCoords.phi) * len + this.canvasWidth / 2, 
-                y: this.canvasHeight / 2 - Math.sin(reversePitchCoords.phi) * len 
+                x: Math.cos(reversePitchCoords.phi) * len + this.canvasWidth / 2,
+                y: this.canvasHeight / 2 - Math.sin(reversePitchCoords.phi) * len
             };
         }
 
