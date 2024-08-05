@@ -17,6 +17,17 @@ document.addEventListener('DOMContentLoaded', (e) => {
 
 var rectBox = document.querySelector('#rect');
 var dotBox = document.querySelector('#dot');
+var info = document.querySelector('.highlight_wrapper');
+var infoBtn = document.querySelector('.info');
+info.style.visibility = 'hidden';
+
+infoBtn.addEventListener('click', function() {
+    if (info.style.visibility === 'hidden') {
+        info.style.visibility = 'visible';
+    } else {
+        info.style.visibility = 'hidden';
+    }
+});
 
 var toggle = document.querySelector('#highlight_toggle');
 
