@@ -18,25 +18,42 @@ document.addEventListener('DOMContentLoaded', (e) => {
 var rectBox = document.querySelector('#rect');
 var dotBox = document.querySelector('#dot');
 
+var toggle = document.querySelector('#highlight_toggle');
+
+if (toggle.checked) {
+    dotBox.classList.add('highlight');
+    rectBox.classList.remove('highlight');
+} else {
+    rectBox.classList.add('highlight');
+    dotBox.classList.remove('highlight');
+}
+
 chrome.runtime.sendMessage({msg: 'loadPreferences'});
 
 chrome.runtime.onMessage.addListener(function(msg, sender, sendResponse) {
     if(msg.msg === 'preferencesLoaded') {
-        rectBox.checked = msg.preferences.rect;
-        dotBox.checked = msg.preferences.dot;
+        if (msg.preferences.rect) {
+            rectBox.classList.add('highlight');
+            dotBox.classList.remove('highlight');
+            toggle.checked = false;
+        } else {
+            dotBox.classList.add('highlight');
+            rectBox.classList.remove('highlight');
+            toggle.checked = true;
+        }
     }
 });
 
-rectBox.addEventListener('change', function() {
+toggle.addEventListener('change', function() {
+    if (toggle.checked) {
+        dotBox.classList.add('highlight');
+        rectBox.classList.remove('highlight');
+    } else {
+        rectBox.classList.add('highlight');
+        dotBox.classList.remove('highlight');
+    }
     chrome.runtime.sendMessage({msg: 'preferencesChanged', preferences: {
-        rect: rectBox.checked,
-        dot: dotBox.checked
+        rect: !toggle.checked,
+        dot: toggle.checked
     }});
   });
-
-dotBox.addEventListener('change', function() {
-    chrome.runtime.sendMessage({msg: 'preferencesChanged', preferences: {
-        rect: rectBox.checked,
-        dot: dotBox.checked
-    }});
-});
