@@ -28,9 +28,9 @@ async function loadPreferences() {
             if (!data.preferences) {
                 chrome.storage.sync.set({preferences: {
                     rect: true,
-                    dot: true
+                    dot: false
                 }});
-                resolve({rect: true, dot: true});
+                resolve({rect: true, dot: false});
             } else {
                 resolve(data.preferences);
             }
