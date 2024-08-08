@@ -17,12 +17,18 @@ async function handlePreferencesChange(preferences) {
 
         if(tab != null) {
             const tabId = tab.id;
-            await chrome.tabs.sendMessage(tabId, { msg: 'preferencesChanged', data: preferences});
+            console.log(tabId);
+            try {
+                await chrome.tabs.sendMessage(tabId, { msg: 'preferencesChanged', data: preferences});
+            } catch (error) {
+                console.log(error);
+            }
         }
     });
+
 }
 
-async function loadPreferences() {
+async function loadPreferences(origin) {
     let p = new Promise(function(resolve, reject){
         chrome.storage.sync.get('preferences', function(data) {
             if (!data.preferences) {
@@ -39,16 +45,18 @@ async function loadPreferences() {
 
     let preferences = await p;
 
-    chrome.runtime.sendMessage({msg: 'preferencesLoaded', preferences: preferences});
-
-    await chrome.tabs.query({ active: true, lastFocusedWindow: true }, async (tabs) => {
-        const tab = tabs[0];
-
-        if(tab != null) {
-            const tabId = tab.id;
-            await chrome.tabs.sendMessage(tabId, { msg: 'preferencesLoaded', data: preferences });
-        }
-    });
+    if (origin === "https://www.geoguessr.com") {
+        await chrome.tabs.query({ active: true, lastFocusedWindow: true }, async (tabs) => {
+            const tab = tabs[0];
+    
+            if(tab != null) {
+                const tabId = tab.id;
+                await chrome.tabs.sendMessage(tabId, { msg: 'preferencesLoaded', data: preferences });
+            }
+        });
+    } else {
+        chrome.runtime.sendMessage({msg: 'preferencesLoaded', preferences: preferences});
+    }
 }
 
 chrome.runtime.onMessage.addListener(function(msg, sender, sendResponse) {
@@ -57,6 +65,6 @@ chrome.runtime.onMessage.addListener(function(msg, sender, sendResponse) {
     } else if(msg.msg === 'preferencesChanged') {
         handlePreferencesChange(msg.preferences);
     } else if(msg.msg === 'loadPreferences') {
-        loadPreferences();
+        loadPreferences(sender.origin);
     }
 });
