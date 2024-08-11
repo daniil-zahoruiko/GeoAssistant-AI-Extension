@@ -22,6 +22,7 @@ function handlePanoChanged(panorama) {
 function clearBoundingBoxes() {
     document.querySelectorAll('[class*="boundingBox"]').forEach(el => el.remove());
     document.querySelectorAll('[class*="circle"]').forEach(el => el.remove());
+    document.querySelectorAll('[class*="infoWindow"]').forEach(el => el.remove());
 }
 
 //#region Listeners
@@ -182,10 +183,10 @@ function initOverlay() {
         canvasWidth;
         canvasHeight;
         cls;
-        div;
-        div2;
-        div3;
-        div4;
+        leftSide;
+        rightSide;
+        topSide;
+        bottomSide;
         infoWindow;
         circleWrapper;
         circle;
@@ -216,6 +217,7 @@ function initOverlay() {
 
             const className = `boundingBox${this.cls}`;
             const circleClassName = `circle${this.cls}`;
+            const infoWindowClassName = `infoWindow${this.cls}`;
             const boundingBoxes = document.getElementsByClassName(className);
             for(let i = 0; i < boundingBoxes.length; i++) {
                 let maxThetaDiff = 0, maxPhiDiff = 0;
@@ -235,92 +237,94 @@ function initOverlay() {
                 }
             }
 
-            this.div = document.createElement('div');
-            this.div.classList.add(className);
-            this.div.style.position = "absolute";
+            this.leftSide = document.createElement('div');
+            this.leftSide.classList.add(className);
+            this.leftSide.style.position = "absolute";
 
-            this.div.style.visibility = preferences.rect ? 'visible' : 'hidden';
+            this.leftSide.style.visibility = preferences.rect ? 'visible' : 'hidden';
 
-            this.div.dataset.topleftTheta = this.topleft.theta;
-            this.div.dataset.topleftPhi = this.topleft.phi;
-            this.div.dataset.toprightTheta = this.topright.theta;
-            this.div.dataset.toprightPhi = this.topright.phi;
-            this.div.dataset.bottomleftTheta = this.bottomleft.theta;
-            this.div.dataset.bottomleftPhi = this.bottomleft.phi;
-            this.div.dataset.bottomrightTheta = this.bottomright.theta;
-            this.div.dataset.bottomrightPhi = this.bottomright.phi;
+            this.leftSide.dataset.topleftTheta = this.topleft.theta;
+            this.leftSide.dataset.topleftPhi = this.topleft.phi;
+            this.leftSide.dataset.toprightTheta = this.topright.theta;
+            this.leftSide.dataset.toprightPhi = this.topright.phi;
+            this.leftSide.dataset.bottomleftTheta = this.bottomleft.theta;
+            this.leftSide.dataset.bottomleftPhi = this.bottomleft.phi;
+            this.leftSide.dataset.bottomrightTheta = this.bottomright.theta;
+            this.leftSide.dataset.bottomrightPhi = this.bottomright.phi;
 
-            this.div.style.background = 'red';
+            this.leftSide.style.background = 'red';
 
-            this.div2 = document.createElement('div');
-            this.div2.classList.add(className);
-            this.div2.style.position = "absolute";
+            this.rightSide = document.createElement('div');
+            this.rightSide.classList.add(className);
+            this.rightSide.style.position = "absolute";
 
-            this.div2.style.visibility = preferences.rect ? 'visible' : 'hidden';
+            this.rightSide.style.visibility = preferences.rect ? 'visible' : 'hidden';
 
-            this.div2.dataset.topleftTheta = this.topleft.theta;
-            this.div2.dataset.topleftPhi = this.topleft.phi;
-            this.div2.dataset.toprightTheta = this.topright.theta;
-            this.div2.dataset.toprightPhi = this.topright.phi;
-            this.div2.dataset.bottomleftTheta = this.bottomleft.theta;
-            this.div2.dataset.bottomleftPhi = this.bottomleft.phi;
-            this.div2.dataset.bottomrightTheta = this.bottomright.theta;
-            this.div2.dataset.bottomrightPhi = this.bottomright.phi;
+            this.rightSide.dataset.topleftTheta = this.topleft.theta;
+            this.rightSide.dataset.topleftPhi = this.topleft.phi;
+            this.rightSide.dataset.toprightTheta = this.topright.theta;
+            this.rightSide.dataset.toprightPhi = this.topright.phi;
+            this.rightSide.dataset.bottomleftTheta = this.bottomleft.theta;
+            this.rightSide.dataset.bottomleftPhi = this.bottomleft.phi;
+            this.rightSide.dataset.bottomrightTheta = this.bottomright.theta;
+            this.rightSide.dataset.bottomrightPhi = this.bottomright.phi;
 
-            this.div2.style.background = 'red';
+            this.rightSide.style.background = 'red';
 
-            this.div3 = document.createElement('div');
-            this.div3.classList.add(className);
-            this.div3.style.position = "absolute";
+            this.topSide = document.createElement('div');
+            this.topSide.classList.add(className);
+            this.topSide.style.position = "absolute";
 
-            this.div3.style.visibility = preferences.rect ? 'visible' : 'hidden';
+            this.topSide.style.visibility = preferences.rect ? 'visible' : 'hidden';
 
-            this.div3.dataset.topleftTheta = this.topleft.theta;
-            this.div3.dataset.topleftPhi = this.topleft.phi;
-            this.div3.dataset.toprightTheta = this.topright.theta;
-            this.div3.dataset.toprightPhi = this.topright.phi;
-            this.div3.dataset.bottomleftTheta = this.bottomleft.theta;
-            this.div3.dataset.bottomleftPhi = this.bottomleft.phi;
-            this.div3.dataset.bottomrightTheta = this.bottomright.theta;
-            this.div3.dataset.bottomrightPhi = this.bottomright.phi;
+            this.topSide.dataset.topleftTheta = this.topleft.theta;
+            this.topSide.dataset.topleftPhi = this.topleft.phi;
+            this.topSide.dataset.toprightTheta = this.topright.theta;
+            this.topSide.dataset.toprightPhi = this.topright.phi;
+            this.topSide.dataset.bottomleftTheta = this.bottomleft.theta;
+            this.topSide.dataset.bottomleftPhi = this.bottomleft.phi;
+            this.topSide.dataset.bottomrightTheta = this.bottomright.theta;
+            this.topSide.dataset.bottomrightPhi = this.bottomright.phi;
 
-            this.div3.style.background = 'red';
+            this.topSide.style.background = 'red';
 
-            this.div4 = document.createElement('div');
-            this.div4.classList.add(className);
-            this.div4.style.position = "absolute";
+            this.bottomSide = document.createElement('div');
+            this.bottomSide.classList.add(className);
+            this.bottomSide.style.position = "absolute";
 
-            this.div4.style.visibility = preferences.rect ? 'visible' : 'hidden';
+            this.bottomSide.style.visibility = preferences.rect ? 'visible' : 'hidden';
 
-            this.div4.dataset.topleftTheta = this.topleft.theta;
-            this.div4.dataset.topleftPhi = this.topleft.phi;
-            this.div4.dataset.toprightTheta = this.topright.theta;
-            this.div4.dataset.toprightPhi = this.topright.phi;
-            this.div4.dataset.bottomleftTheta = this.bottomleft.theta;
-            this.div4.dataset.bottomleftPhi = this.bottomleft.phi;
-            this.div4.dataset.bottomrightTheta = this.bottomright.theta;
-            this.div4.dataset.bottomrightPhi = this.bottomright.phi;
+            this.bottomSide.dataset.topleftTheta = this.topleft.theta;
+            this.bottomSide.dataset.topleftPhi = this.topleft.phi;
+            this.bottomSide.dataset.toprightTheta = this.topright.theta;
+            this.bottomSide.dataset.toprightPhi = this.topright.phi;
+            this.bottomSide.dataset.bottomleftTheta = this.bottomleft.theta;
+            this.bottomSide.dataset.bottomleftPhi = this.bottomleft.phi;
+            this.bottomSide.dataset.bottomrightTheta = this.bottomright.theta;
+            this.bottomSide.dataset.bottomrightPhi = this.bottomright.phi;
 
-            this.div4.style.background = 'red';
+            this.bottomSide.style.background = 'red';
 
-            this.div.style.width = "3px";
-            this.div2.style.width = "3px";
-            this.div3.style.height = "3px";
-            this.div4.style.height = "3px";
+            this.leftSide.style.width = "3px";
+            this.rightSide.style.width = "3px";
+            this.topSide.style.height = "3px";
+            this.bottomSide.style.height = "3px";
 
-            this.circleWrapper = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            const svgNS = "http://www.w3.org/2000/svg";
+
+            this.circleWrapper = document.createElementNS(svgNS, "svg");
             this.circleWrapper.style.opacity = "0.7";
             // Define the blur filter
-            const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+            const defs = document.createElementNS(svgNS, "defs");
 
-            const filter = document.createElementNS("http://www.w3.org/2000/svg", "filter");
+            const filter = document.createElementNS(svgNS, "filter");
             filter.setAttribute("id", "blur");
 
-            const feGaussianBlur = document.createElementNS("http://www.w3.org/2000/svg", "feGaussianBlur");
+            const feGaussianBlur = document.createElementNS(svgNS, "feGaussianBlur");
             feGaussianBlur.setAttribute("in", "SourceGraphic");
             feGaussianBlur.setAttribute("stdDeviation", 1.5);
 
-            const feComposite = document.createElementNS("http://www.w3.org/2000/svg", "feComposite");
+            const feComposite = document.createElementNS(svgNS, "feComposite");
             feComposite.setAttribute("operator", "in");
             feComposite.setAttribute("in2", "SourceGraphic");
 
@@ -335,7 +339,7 @@ function initOverlay() {
             this.circleWrapper.style.position = "absolute";
 
             // Create a circle element
-            this.circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            this.circle = document.createElementNS(svgNS, "circle");
             this.circle.setAttribute("cx", "50%");
             this.circle.setAttribute("cy", "50%");
             this.circle.setAttribute("stroke", "black");
@@ -343,11 +347,13 @@ function initOverlay() {
             this.circle.setAttribute("fill", "red");
             this.circle.setAttribute("filter", "url(#blur)");
 
+            this.circle.style.pointerEvents = "auto";
+
             // Append the circle to the SVG
             this.circleWrapper.appendChild(this.circle);
 
             this.infoWindow = document.createElement('div');
-            this.infoWindow.classList.add(className);
+            this.infoWindow.classList.add(infoWindowClassName);
             this.infoWindow.style.position = "absolute";
             this.infoWindow.style.visibility = "hidden";
             this.infoWindow.style.background = "rgba(0, 0, 0, 0.8)";
@@ -356,16 +362,20 @@ function initOverlay() {
             this.infoWindow.style.borderRadius = "0.5rem";
             this.infoWindow.style.zIndex = "1000";
             this.infoWindow.style.transition = "visibility 0.3s";
+            this.infoWindow.style.overflow = "hidden";
+            this.infoWindow.style.width = "250px";
 
             const name = document.createElement('h3');
             name.innerText = this.name;
             name.style.margin = "0";
+            name.style.width = "90%";
 
             const description = document.createElement('p');
             description.innerText = this.description;
             description.style.margin = "0";
+            description.style.width = "90%";
 
-            const exitSVG = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            const exitSVG = document.createElementNS(svgNS, "svg");
             exitSVG.style.pointerEvents = "auto";
             exitSVG.setAttribute("width", "1.5rem");
             exitSVG.setAttribute("height", "1.5rem");
@@ -377,7 +387,7 @@ function initOverlay() {
             exitSVG.style.transition = "fill 0.3s";
             exitSVG.style.zIndex = "1001";
 
-            const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            const path = document.createElementNS(svgNS, "path");
             path.setAttribute("d", "M 7.71875 6.28125 L 6.28125 7.71875 L 23.5625 25 L 6.28125 42.28125 L 7.71875 43.71875 L 25 26.4375 L 42.28125 43.71875 L 43.71875 42.28125 L 26.4375 25 L 43.71875 7.71875 L 42.28125 6.28125 L 25 23.5625 Z");
             path.style.fill = "white";
             // align path in the middle
@@ -387,14 +397,14 @@ function initOverlay() {
 
             exitSVG.appendChild(path);
 
-            exitSVG.addEventListener('mouseenter', (e) => {
+            exitSVG.addEventListener('mouseenter', () => {
                 path.style.fill = "red";
             });
 
-            exitSVG.addEventListener('mouseleave', (e) => {
+            exitSVG.addEventListener('mouseleave', () => {
                 path.style.fill = "white";
             });
-            exitSVG.addEventListener('click', (e) => {
+            exitSVG.addEventListener('click', () => {
                 this.infoWindow.style.visibility = "hidden";
             });
 
@@ -403,21 +413,16 @@ function initOverlay() {
             this.infoWindow.appendChild(description);
             this.infoWindow.appendChild(exitSVG);
 
-            this.infoWindow.addEventListener('mouseleave', (e) => {
-                this.infoWindow.style.visibility = "hidden";
-            });
-
-
             const panes = this.getPanes();
-            panes.overlayLayer.appendChild(this.div);
-            panes.overlayLayer.appendChild(this.div2);
-            panes.overlayLayer.appendChild(this.div3);
-            panes.overlayLayer.appendChild(this.div4);
+            panes.overlayLayer.appendChild(this.leftSide);
+            panes.overlayLayer.appendChild(this.rightSide);
+            panes.overlayLayer.appendChild(this.topSide);
+            panes.overlayLayer.appendChild(this.bottomSide);
             panes.overlayLayer.appendChild(this.circleWrapper);
             panes.overlayLayer.appendChild(this.infoWindow);
 
-            this.div.addEventListener('mouseleave', (e) => {
-                if (e.clientX < this.div.getBoundingClientRect().left) {
+            this.leftSide.addEventListener('mouseleave', (e) => {
+                if (e.clientX < this.leftSide.getBoundingClientRect().left) {
                     this.infoWindow.style.visibility = "hidden";
                 } else {
                     this.infoWindow.style.visibility = "visible";
@@ -425,45 +430,57 @@ function initOverlay() {
             });
 
 
-            this.div2.addEventListener('mouseleave', (e) => {
-                if (e.clientX > this.div2.getBoundingClientRect().left && e.clientY > this.infoWindow.getBoundingClientRect().bottom) {
+            this.rightSide.addEventListener('mouseleave', (e) => {
+                if (e.clientX > this.rightSide.getBoundingClientRect().left && e.clientY > this.infoWindow.getBoundingClientRect().bottom) {
                     this.infoWindow.style.visibility = "hidden";
                 } else {
                     this.infoWindow.style.visibility = "visible";
                 }
             });
 
-            this.div3.addEventListener('mouseleave', (e) => {
-                if (e.clientY < this.div3.getBoundingClientRect().top) {
+            this.topSide.addEventListener('mouseleave', (e) => {
+                if (e.clientY < this.topSide.getBoundingClientRect().top) {
                     this.infoWindow.style.visibility = "hidden";
                 } else {
                     this.infoWindow.style.visibility = "visible";
                 }
             });
 
-            this.div4.addEventListener('mouseleave', (e) => {
-                if (e.clientY > this.div4.getBoundingClientRect().top) {
+            this.bottomSide.addEventListener('mouseleave', (e) => {
+                if (e.clientY > this.bottomSide.getBoundingClientRect().top) {
                     this.infoWindow.style.visibility = "hidden";
                 } else {
                     this.infoWindow.style.visibility = "visible";
                 }
+            });
+
+            this.circle.addEventListener('click', () => {
+                if (this.infoWindow.style.visibility === "visible") {
+                    this.infoWindow.style.visibility = "hidden";
+                } else {
+                    this.infoWindow.style.visibility = "visible";
+                }
+            });
+
+            this.infoWindow.addEventListener('mouseleave', () => {
+                this.infoWindow.style.visibility = "hidden";
             });
         }
 
         draw() {
             // calculate new position according to current pitch and heading
             this.refreshCanvasSize();
-            if (this.div) {
+            if (this.leftSide && this.rightSide && this.topSide && this.bottomSide && this.circleWrapper && this.circle && this.infoWindow) {
                 const currentPov = this.getMap().getPov();
                 if(!this.isOnScreen(currentPov)) {
-                    this.div.style.visibility = 'hidden';
-                    this.div.classList.add('hidden');
-                    this.div2.style.visibility = 'hidden';
-                    this.div2.classList.add('hidden');
-                    this.div3.style.visibility = 'hidden';
-                    this.div3.classList.add('hidden');
-                    this.div4.style.visibility = 'hidden';
-                    this.div4.classList.add('hidden');
+                    this.leftSide.style.visibility = 'hidden';
+                    this.leftSide.classList.add('hidden');
+                    this.rightSide.style.visibility = 'hidden';
+                    this.rightSide.classList.add('hidden');
+                    this.topSide.style.visibility = 'hidden';
+                    this.topSide.classList.add('hidden');
+                    this.bottomSide.style.visibility = 'hidden';
+                    this.bottomSide.classList.add('hidden');
                     this.circleWrapper.style.visibility = 'hidden';
                     this.circleWrapper.classList.add('hidden');
                     this.infoWindow.style.visibility = 'hidden';
@@ -472,36 +489,34 @@ function initOverlay() {
 
                 const newCoords = this.calculateCurrentCoords(currentPov);
 
-                this.div.classList.remove('hidden');
-                this.div.style.visibility = preferences.rect ? 'visible' : 'hidden';
-                this.div2.classList.remove('hidden');
-                this.div2.style.visibility = preferences.rect ? 'visible' : 'hidden';
-                this.div3.classList.remove('hidden');
-                this.div3.style.visibility = preferences.rect ? 'visible' : 'hidden';
-                this.div4.classList.remove('hidden');
-                this.div4.style.visibility = preferences.rect ? 'visible' : 'hidden';
-
-                this.infoWindow.classList.remove('hidden');
+                this.leftSide.classList.remove('hidden');
+                this.leftSide.style.visibility = preferences.rect ? 'visible' : 'hidden';
+                this.rightSide.classList.remove('hidden');
+                this.rightSide.style.visibility = preferences.rect ? 'visible' : 'hidden';
+                this.topSide.classList.remove('hidden');
+                this.topSide.style.visibility = preferences.rect ? 'visible' : 'hidden';
+                this.bottomSide.classList.remove('hidden');
+                this.bottomSide.style.visibility = preferences.rect ? 'visible' : 'hidden';
 
                 this.circleWrapper.classList.remove('hidden');
                 this.circleWrapper.style.visibility = preferences.dot ? 'visible' : 'hidden';
 
-                this.div.style.left = `${newCoords.left}px`;
-                this.div.style.top = `${newCoords.top}px`;
+                this.leftSide.style.left = `${newCoords.left}px`;
+                this.leftSide.style.top = `${newCoords.top}px`;
 
-                this.div2.style.left = `${newCoords.left + newCoords.width}px`;
-                this.div2.style.top = `${newCoords.top}px`;
+                this.rightSide.style.left = `${newCoords.left + newCoords.width}px`;
+                this.rightSide.style.top = `${newCoords.top}px`;
 
-                this.div3.style.left = `${newCoords.left}px`;
-                this.div3.style.top = `${newCoords.top}px`;
+                this.topSide.style.left = `${newCoords.left}px`;
+                this.topSide.style.top = `${newCoords.top}px`;
 
-                this.div4.style.left = `${newCoords.left}px`;
-                this.div4.style.top = `${newCoords.top + newCoords.height}px`;
+                this.bottomSide.style.left = `${newCoords.left}px`;
+                this.bottomSide.style.top = `${newCoords.top + newCoords.height}px`;
 
-                this.div.style.height = `${newCoords.height}px`;
-                this.div2.style.height = `${newCoords.height}px`;
-                this.div3.style.width = `${newCoords.width}px`;
-                this.div4.style.width = `${newCoords.width}px`;
+                this.leftSide.style.height = `${newCoords.height}px`;
+                this.rightSide.style.height = `${newCoords.height}px`;
+                this.topSide.style.width = `${newCoords.width}px`;
+                this.bottomSide.style.width = `${newCoords.width + 3}px`;
 
                 this.infoWindow.style.left = `${newCoords.left + newCoords.width + 3}px`;
                 this.infoWindow.style.top = `${newCoords.top}px`;
@@ -518,9 +533,21 @@ function initOverlay() {
         }
 
         onRemove() {
-            if (this.div) {
-                this.div.parentNode.removeChild(this.div);
-                delete this.div;
+            if (this.leftSide) {
+                this.leftSide.parentNode.removeChild(this.leftSide);
+                delete this.leftSide;
+            }
+            if (this.rightSide) {
+                this.rightSide.parentNode.removeChild(this.rightSide);
+                delete this.rightSide;
+            }
+            if (this.topSide) {
+                this.topSide.parentNode.removeChild(this.topSide);
+                delete this.topSide;
+            }
+            if (this.bottomSide) {
+                this.bottomSide.parentNode.removeChild(this.bottomSide);
+                delete this.bottomSide;
             }
         }
 
