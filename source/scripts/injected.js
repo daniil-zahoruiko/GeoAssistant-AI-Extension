@@ -46,14 +46,12 @@ window.addEventListener('preferencesChanged', (e) => {
     preferences = e.detail;
     document.querySelectorAll('[class*="boundingBox"]').forEach(el => {
         if (el.classList.contains("hidden")) {
-            console.log('hidden');
             return;
         }
         el.style.visibility = preferences.rect ? 'visible' : 'hidden'
     });
     document.querySelectorAll('[class*="circle"]').forEach(el => {
         if (el.classList.contains("hidden")) {
-            console.log('hidden');
             return;
         }
         el.style.visibility = preferences.dot ? 'visible' : 'hidden'});
@@ -234,10 +232,6 @@ function initOverlay() {
                 if(maxThetaDiff <= limit && maxPhiDiff <= limit) {
                     delete this;
                     return;
-                }  
-                else {
-                    console.log(maxThetaDiff);
-                    console.log(maxPhiDiff);
                 }
             }
 
@@ -411,7 +405,6 @@ function initOverlay() {
 
             this.infoWindow.addEventListener('mouseleave', (e) => {
                 this.infoWindow.style.visibility = "hidden";
-                console.log("bamm")
             });
 
 
@@ -576,7 +569,6 @@ function initOverlay() {
                             if(theta <= Math.max(p1.theta, p2.theta)) {
                                 if(phi <= Math.max(p1.phi, p2.phi)) {
                                     const phi_intersection = ((theta - p1.theta) * (p2.phi - p1.phi)) / (p2.theta - p1.theta) + p1.phi;
-                                    // console.log(phi_intersection);
                                     // If the point is to the left of intersection, the point is inside the polygon
                                     if(phi <= phi_intersection) {
                                         inside = !inside;
