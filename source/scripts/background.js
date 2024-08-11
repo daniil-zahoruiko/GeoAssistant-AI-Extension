@@ -17,7 +17,6 @@ async function handlePreferencesChange(preferences) {
 
         if(tab != null) {
             const tabId = tab.id;
-            console.log(tabId);
             try {
                 await chrome.tabs.sendMessage(tabId, { msg: 'preferencesChanged', data: preferences});
             } catch (error) {
