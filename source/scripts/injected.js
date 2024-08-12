@@ -165,6 +165,298 @@ function initStreetView() {
     }
 }
 
+class BoundingBox{
+    topleft;
+    topright;
+    bottomleft;
+    bottomright;
+    cls;
+    name;
+    description;
+    circleWrapper;
+    circle;
+    infoWindow;
+    exitSVG;
+    svgNS = "http://www.w3.org/2000/svg";
+
+    constructor(topleft, topright, bottomleft, bottomright ,cls, name, description) {
+        this.cls = cls;
+        this.name = name;
+        this.description = description;
+        this.topleft = topleft;
+        this.topright = topright;
+        this.bottomleft = bottomleft;
+        this.bottomright = bottomright;
+    }
+
+    createRectangle() {
+        const className = `boundingBox${this.cls}`;
+        const primaryClassName = `primary${this.cls}`;
+
+        this.leftSide = document.createElement('div');
+        this.leftSide.classList.add(className);
+        // Set left side as primary to store the coordinates of the whole bounding box
+        this.leftSide.classList.add(primaryClassName)
+        this.leftSide.style.position = "absolute";
+        this.leftSide.style.visibility = preferences.rect ? 'visible' : 'hidden';
+        this.leftSide.style.background = 'red';
+        this.leftSide.style.width = "3px";
+        // Store the coordinates in the dataset
+        this.leftSide.dataset.topleftTheta = this.topleft.theta;
+        this.leftSide.dataset.topleftPhi = this.topleft.phi;
+        this.leftSide.dataset.toprightTheta = this.topright.theta;
+        this.leftSide.dataset.toprightPhi = this.topright.phi;
+        this.leftSide.dataset.bottomleftTheta = this.bottomleft.theta;
+        this.leftSide.dataset.bottomleftPhi = this.bottomleft.phi;
+        this.leftSide.dataset.bottomrightTheta = this.bottomright.theta;
+        this.leftSide.dataset.bottomrightPhi = this.bottomright.phi;
+
+        this.rightSide = document.createElement('div');
+        this.rightSide.classList.add(className);
+        this.rightSide.style.position = "absolute";
+        this.rightSide.style.visibility = preferences.rect ? 'visible' : 'hidden';
+        this.rightSide.style.background = 'red';
+        this.rightSide.style.width = "3px";
+
+        this.topSide = document.createElement('div');
+        this.topSide.classList.add(className);
+        this.topSide.style.position = "absolute";
+        this.topSide.style.visibility = preferences.rect ? 'visible' : 'hidden';
+        this.topSide.style.background = 'red';
+        this.topSide.style.height = "3px";
+
+        this.bottomSide = document.createElement('div');
+        this.bottomSide.classList.add(className);
+        this.bottomSide.style.position = "absolute";
+        this.bottomSide.style.visibility = preferences.rect ? 'visible' : 'hidden';
+        this.bottomSide.style.background = 'red';
+        this.bottomSide.style.height = "3px";
+
+        return [this.leftSide, this.rightSide, this.topSide, this.bottomSide];
+    }
+
+    createCircle() {
+        const circleClassName = `circle${this.cls}`;
+
+        this.circleWrapper = document.createElementNS(this.svgNS, "svg");
+        this.circleWrapper.style.opacity = "0.7";
+        // Define the blur filter
+        const defs = document.createElementNS(this.svgNS, "defs");
+
+        const filter = document.createElementNS(this.svgNS, "filter");
+        filter.setAttribute("id", "blur");
+
+        const feGaussianBlur = document.createElementNS(this.svgNS, "feGaussianBlur");
+        feGaussianBlur.setAttribute("in", "SourceGraphic");
+        feGaussianBlur.setAttribute("stdDeviation", 1.5);
+
+        const feComposite = document.createElementNS(this.svgNS, "feComposite");
+        feComposite.setAttribute("operator", "in");
+        feComposite.setAttribute("in2", "SourceGraphic");
+
+        filter.appendChild(feGaussianBlur);
+        filter.appendChild(feComposite);
+        defs.appendChild(filter);
+
+        this.circleWrapper.appendChild(defs);
+
+        this.circleWrapper.classList.add(circleClassName);
+        this.circleWrapper.style.visibility = preferences.dot ? 'visible' : 'hidden';
+        this.circleWrapper.style.position = "absolute";
+
+        // Create a circle element
+        this.circle = document.createElementNS(this.svgNS, "circle");
+        this.circle.setAttribute("cx", "50%");
+        this.circle.setAttribute("cy", "50%");
+        this.circle.setAttribute("stroke", "black");
+        this.circle.setAttribute("stroke-width", "2");
+        this.circle.setAttribute("fill", "red");
+        this.circle.setAttribute("filter", "url(#blur)");
+
+        this.circle.style.pointerEvents = "auto";
+
+        // Append the circle to the SVG
+        this.circleWrapper.appendChild(this.circle);
+
+        return [this.circleWrapper, this.circle];
+    }
+
+    createInfoWindow() {
+        const infoWindowClassName = `infoWindow${this.cls}`;
+
+        this.infoWindow = document.createElement('div');
+        this.infoWindow.classList.add(infoWindowClassName);
+        this.infoWindow.style.position = "absolute";
+        this.infoWindow.style.visibility = "hidden";
+        this.infoWindow.style.background = "rgba(0, 0, 0, 0.8)";
+        this.infoWindow.style.color = "white";
+        this.infoWindow.style.padding = "0.5rem";
+        this.infoWindow.style.borderRadius = "0.5rem";
+        this.infoWindow.style.zIndex = "1000";
+        this.infoWindow.style.overflow = "hidden";
+        this.infoWindow.style.width = "250px";
+
+        const name = document.createElement('h3');
+        name.innerText = this.name;
+        name.style.margin = "0";
+        name.style.width = "90%";
+
+        const description = document.createElement('p');
+        description.innerText = this.description;
+        description.style.margin = "0";
+        description.style.width = "90%";
+
+        this.exitSVG = document.createElementNS(this.svgNS, "svg");
+        this.exitSVG.style.pointerEvents = "auto";
+        this.exitSVG.setAttribute("width", "1.5rem");
+        this.exitSVG.setAttribute("height", "1.5rem");
+        this.exitSVG.style.position = "absolute";
+        this.exitSVG.style.top = "0.1rem";
+        this.exitSVG.style.right = "0.5rem";
+        this.exitSVG.style.cursor = "pointer";
+        this.exitSVG.style.fill = "white";
+        this.exitSVG.style.zIndex = "1001";
+
+        const path = document.createElementNS(this.svgNS, "path");
+        path.setAttribute("d", "M 7.71875 6.28125 L 6.28125 7.71875 L 23.5625 25 L 6.28125 42.28125 L 7.71875 43.71875 L 25 26.4375 L 42.28125 43.71875 L 43.71875 42.28125 L 26.4375 25 L 43.71875 7.71875 L 42.28125 6.28125 L 25 23.5625 Z");
+        path.style.fill = "white";
+        // align path in the middle
+        path.setAttribute("x", "0");
+        path.setAttribute("y", "0");
+        path.setAttribute("transform", "scale(0.4)");
+
+        this.exitSVG.appendChild(path);
+
+        this.exitSVG.addEventListener('mouseenter', () => {
+            path.style.fill = "red";
+        });
+
+        this.exitSVG.addEventListener('mouseleave', () => {
+            path.style.fill = "white";
+        });
+
+        this.infoWindow.appendChild(name);
+        this.infoWindow.appendChild(description);
+        this.infoWindow.appendChild(this.exitSVG);
+
+        return this.infoWindow;
+    }
+
+    addListeners() {
+        this.leftSide.addEventListener('mouseleave', (e) => {
+            if (e.clientX < this.leftSide.getBoundingClientRect().left) {
+                this.infoWindow.style.visibility = "hidden";
+            } else {
+                this.infoWindow.style.visibility = "visible";
+            }
+        });
+
+
+        this.rightSide.addEventListener('mouseleave', (e) => {
+            if (e.clientX > this.rightSide.getBoundingClientRect().left && e.clientY > this.infoWindow.getBoundingClientRect().bottom) {
+                this.infoWindow.style.visibility = "hidden";
+            } else {
+                this.infoWindow.style.visibility = "visible";
+            }
+        });
+
+        this.topSide.addEventListener('mouseleave', (e) => {
+            if (e.clientY < this.topSide.getBoundingClientRect().top) {
+                this.infoWindow.style.visibility = "hidden";
+            } else {
+                this.infoWindow.style.visibility = "visible";
+            }
+        });
+
+        this.bottomSide.addEventListener('mouseleave', (e) => {
+            if (e.clientY > this.bottomSide.getBoundingClientRect().top) {
+                this.infoWindow.style.visibility = "hidden";
+            } else {
+                this.infoWindow.style.visibility = "visible";
+            }
+        });
+
+        this.circle.addEventListener('click', () => {
+            if (this.infoWindow.style.visibility === "visible") {
+                this.infoWindow.style.visibility = "hidden";
+            } else {
+                this.infoWindow.style.visibility = "visible";
+            }
+        });
+
+        this.infoWindow.addEventListener('mouseleave', () => {
+            this.infoWindow.style.visibility = "hidden";
+        });
+
+        this.exitSVG.addEventListener('click', () => {
+            this.infoWindow.style.visibility = "hidden";
+        });
+    }
+
+    paint(newCoords) {
+        this.leftSide.style.left = `${newCoords.left}px`;
+        this.leftSide.style.top = `${newCoords.top}px`;
+
+        this.rightSide.style.left = `${newCoords.left + newCoords.width}px`;
+        this.rightSide.style.top = `${newCoords.top}px`;
+
+        this.topSide.style.left = `${newCoords.left}px`;
+        this.topSide.style.top = `${newCoords.top}px`;
+
+        this.bottomSide.style.left = `${newCoords.left}px`;
+        this.bottomSide.style.top = `${newCoords.top + newCoords.height}px`;
+
+        this.leftSide.style.height = `${newCoords.height}px`;
+        this.rightSide.style.height = `${newCoords.height}px`;
+        this.topSide.style.width = `${newCoords.width}px`;
+        this.bottomSide.style.width = `${newCoords.width + 3}px`;
+
+        this.infoWindow.style.left = `${newCoords.left + newCoords.width + 3}px`;
+        this.infoWindow.style.top = `${newCoords.top}px`;
+
+
+        this.circleWrapper.setAttribute("width", Math.max(newCoords.width, 15));
+        this.circleWrapper.setAttribute("height", Math.max(newCoords.height, 15));
+
+        this.circleWrapper.style.left = `${newCoords.left}px`;
+        this.circleWrapper.style.top = `${newCoords.top}px`;
+
+        this.circle.setAttribute("r", Math.max(Math.min(newCoords.width / 3, 15), 7) );
+    }
+
+    hideComponents() {
+        this.leftSide.style.visibility = 'hidden';
+        this.leftSide.classList.add('hidden');
+        this.rightSide.style.visibility = 'hidden';
+        this.rightSide.classList.add('hidden');
+        this.topSide.style.visibility = 'hidden';
+        this.topSide.classList.add('hidden');
+        this.bottomSide.style.visibility = 'hidden';
+        this.bottomSide.classList.add('hidden');
+        this.circleWrapper.style.visibility = 'hidden';
+        this.circleWrapper.classList.add('hidden');
+        this.infoWindow.style.visibility = 'hidden';
+    }
+
+    showComponents() {
+        this.leftSide.classList.remove('hidden');
+        this.leftSide.style.visibility = preferences.rect ? 'visible' : 'hidden';
+        this.rightSide.classList.remove('hidden');
+        this.rightSide.style.visibility = preferences.rect ? 'visible' : 'hidden';
+        this.topSide.classList.remove('hidden');
+        this.topSide.style.visibility = preferences.rect ? 'visible' : 'hidden';
+        this.bottomSide.classList.remove('hidden');
+        this.bottomSide.style.visibility = preferences.rect ? 'visible' : 'hidden';
+
+        this.circleWrapper.classList.remove('hidden');
+        this.circleWrapper.style.visibility = preferences.dot ? 'visible' : 'hidden';
+    }
+
+    isReady() {
+        return this.leftSide && this.rightSide && this.topSide && this.bottomSide && this.circleWrapper && this.circle && this.infoWindow;
+    }
+}
+
 //#region Overlay
 function initOverlay() {
     class SpherePoint {
@@ -193,6 +485,7 @@ function initOverlay() {
         name;
         description;
         rect;
+        boundingBox;
 
         constructor(topleftx, toplefty, bottomrightx, bottomrighty, heading, pitch, zoom, cls, name, description) {
             super();
@@ -209,16 +502,16 @@ function initOverlay() {
 
             this.name = name;
             this.description = description;
+            this.boundingBox = new BoundingBox(this.topleft, this.topright, this.bottomleft, this.bottomright, cls, name, description);
         }
 
         onAdd() {
             // possibly make this limit dependent on the width of the rectnagle
             const limit = 0.2
 
-            const className = `boundingBox${this.cls}`;
-            const circleClassName = `circle${this.cls}`;
-            const infoWindowClassName = `infoWindow${this.cls}`;
-            const boundingBoxes = document.getElementsByClassName(className);
+            // const className = `boundingBox${this.cls}`;
+            const primaryClassName = `primary${this.cls}`;
+            const boundingBoxes = document.getElementsByClassName(primaryClassName);
             for(let i = 0; i < boundingBoxes.length; i++) {
                 let maxThetaDiff = 0, maxPhiDiff = 0;
                 maxThetaDiff = Math.max(maxThetaDiff, Math.abs(boundingBoxes[i].dataset.topleftTheta - this.topleft.theta));
@@ -237,179 +530,10 @@ function initOverlay() {
                 }
             }
 
-            this.leftSide = document.createElement('div');
-            this.leftSide.classList.add(className);
-            this.leftSide.style.position = "absolute";
-
-            this.leftSide.style.visibility = preferences.rect ? 'visible' : 'hidden';
-
-            this.leftSide.dataset.topleftTheta = this.topleft.theta;
-            this.leftSide.dataset.topleftPhi = this.topleft.phi;
-            this.leftSide.dataset.toprightTheta = this.topright.theta;
-            this.leftSide.dataset.toprightPhi = this.topright.phi;
-            this.leftSide.dataset.bottomleftTheta = this.bottomleft.theta;
-            this.leftSide.dataset.bottomleftPhi = this.bottomleft.phi;
-            this.leftSide.dataset.bottomrightTheta = this.bottomright.theta;
-            this.leftSide.dataset.bottomrightPhi = this.bottomright.phi;
-
-            this.leftSide.style.background = 'red';
-
-            this.rightSide = document.createElement('div');
-            this.rightSide.classList.add(className);
-            this.rightSide.style.position = "absolute";
-
-            this.rightSide.style.visibility = preferences.rect ? 'visible' : 'hidden';
-
-            this.rightSide.dataset.topleftTheta = this.topleft.theta;
-            this.rightSide.dataset.topleftPhi = this.topleft.phi;
-            this.rightSide.dataset.toprightTheta = this.topright.theta;
-            this.rightSide.dataset.toprightPhi = this.topright.phi;
-            this.rightSide.dataset.bottomleftTheta = this.bottomleft.theta;
-            this.rightSide.dataset.bottomleftPhi = this.bottomleft.phi;
-            this.rightSide.dataset.bottomrightTheta = this.bottomright.theta;
-            this.rightSide.dataset.bottomrightPhi = this.bottomright.phi;
-
-            this.rightSide.style.background = 'red';
-
-            this.topSide = document.createElement('div');
-            this.topSide.classList.add(className);
-            this.topSide.style.position = "absolute";
-
-            this.topSide.style.visibility = preferences.rect ? 'visible' : 'hidden';
-
-            this.topSide.dataset.topleftTheta = this.topleft.theta;
-            this.topSide.dataset.topleftPhi = this.topleft.phi;
-            this.topSide.dataset.toprightTheta = this.topright.theta;
-            this.topSide.dataset.toprightPhi = this.topright.phi;
-            this.topSide.dataset.bottomleftTheta = this.bottomleft.theta;
-            this.topSide.dataset.bottomleftPhi = this.bottomleft.phi;
-            this.topSide.dataset.bottomrightTheta = this.bottomright.theta;
-            this.topSide.dataset.bottomrightPhi = this.bottomright.phi;
-
-            this.topSide.style.background = 'red';
-
-            this.bottomSide = document.createElement('div');
-            this.bottomSide.classList.add(className);
-            this.bottomSide.style.position = "absolute";
-
-            this.bottomSide.style.visibility = preferences.rect ? 'visible' : 'hidden';
-
-            this.bottomSide.dataset.topleftTheta = this.topleft.theta;
-            this.bottomSide.dataset.topleftPhi = this.topleft.phi;
-            this.bottomSide.dataset.toprightTheta = this.topright.theta;
-            this.bottomSide.dataset.toprightPhi = this.topright.phi;
-            this.bottomSide.dataset.bottomleftTheta = this.bottomleft.theta;
-            this.bottomSide.dataset.bottomleftPhi = this.bottomleft.phi;
-            this.bottomSide.dataset.bottomrightTheta = this.bottomright.theta;
-            this.bottomSide.dataset.bottomrightPhi = this.bottomright.phi;
-
-            this.bottomSide.style.background = 'red';
-
-            this.leftSide.style.width = "3px";
-            this.rightSide.style.width = "3px";
-            this.topSide.style.height = "3px";
-            this.bottomSide.style.height = "3px";
-
-            const svgNS = "http://www.w3.org/2000/svg";
-
-            this.circleWrapper = document.createElementNS(svgNS, "svg");
-            this.circleWrapper.style.opacity = "0.7";
-            // Define the blur filter
-            const defs = document.createElementNS(svgNS, "defs");
-
-            const filter = document.createElementNS(svgNS, "filter");
-            filter.setAttribute("id", "blur");
-
-            const feGaussianBlur = document.createElementNS(svgNS, "feGaussianBlur");
-            feGaussianBlur.setAttribute("in", "SourceGraphic");
-            feGaussianBlur.setAttribute("stdDeviation", 1.5);
-
-            const feComposite = document.createElementNS(svgNS, "feComposite");
-            feComposite.setAttribute("operator", "in");
-            feComposite.setAttribute("in2", "SourceGraphic");
-
-            filter.appendChild(feGaussianBlur);
-            filter.appendChild(feComposite);
-            defs.appendChild(filter);
-
-            this.circleWrapper.appendChild(defs);
-
-            this.circleWrapper.classList.add(circleClassName);
-            this.circleWrapper.style.visibility = preferences.dot ? 'visible' : 'hidden';
-            this.circleWrapper.style.position = "absolute";
-
-            // Create a circle element
-            this.circle = document.createElementNS(svgNS, "circle");
-            this.circle.setAttribute("cx", "50%");
-            this.circle.setAttribute("cy", "50%");
-            this.circle.setAttribute("stroke", "black");
-            this.circle.setAttribute("stroke-width", "2");
-            this.circle.setAttribute("fill", "red");
-            this.circle.setAttribute("filter", "url(#blur)");
-
-            this.circle.style.pointerEvents = "auto";
-
-            // Append the circle to the SVG
-            this.circleWrapper.appendChild(this.circle);
-
-            this.infoWindow = document.createElement('div');
-            this.infoWindow.classList.add(infoWindowClassName);
-            this.infoWindow.style.position = "absolute";
-            this.infoWindow.style.visibility = "hidden";
-            this.infoWindow.style.background = "rgba(0, 0, 0, 0.8)";
-            this.infoWindow.style.color = "white";
-            this.infoWindow.style.padding = "0.5rem";
-            this.infoWindow.style.borderRadius = "0.5rem";
-            this.infoWindow.style.zIndex = "1000";
-            this.infoWindow.style.overflow = "hidden";
-            this.infoWindow.style.width = "250px";
-
-            const name = document.createElement('h3');
-            name.innerText = this.name;
-            name.style.margin = "0";
-            name.style.width = "90%";
-
-            const description = document.createElement('p');
-            description.innerText = this.description;
-            description.style.margin = "0";
-            description.style.width = "90%";
-
-            const exitSVG = document.createElementNS(svgNS, "svg");
-            exitSVG.style.pointerEvents = "auto";
-            exitSVG.setAttribute("width", "1.5rem");
-            exitSVG.setAttribute("height", "1.5rem");
-            exitSVG.style.position = "absolute";
-            exitSVG.style.top = "0.1rem";
-            exitSVG.style.right = "0.5rem";
-            exitSVG.style.cursor = "pointer";
-            exitSVG.style.fill = "white";
-            exitSVG.style.zIndex = "1001";
-
-            const path = document.createElementNS(svgNS, "path");
-            path.setAttribute("d", "M 7.71875 6.28125 L 6.28125 7.71875 L 23.5625 25 L 6.28125 42.28125 L 7.71875 43.71875 L 25 26.4375 L 42.28125 43.71875 L 43.71875 42.28125 L 26.4375 25 L 43.71875 7.71875 L 42.28125 6.28125 L 25 23.5625 Z");
-            path.style.fill = "white";
-            // align path in the middle
-            path.setAttribute("x", "0");
-            path.setAttribute("y", "0");
-            path.setAttribute("transform", "scale(0.4)");
-
-            exitSVG.appendChild(path);
-
-            exitSVG.addEventListener('mouseenter', () => {
-                path.style.fill = "red";
-            });
-
-            exitSVG.addEventListener('mouseleave', () => {
-                path.style.fill = "white";
-            });
-            exitSVG.addEventListener('click', () => {
-                this.infoWindow.style.visibility = "hidden";
-            });
-
-
-            this.infoWindow.appendChild(name);
-            this.infoWindow.appendChild(description);
-            this.infoWindow.appendChild(exitSVG);
+            [this.leftSide, this.rightSide, this.topSide, this.bottomSide] = this.boundingBox.createRectangle();
+            [this.circleWrapper, this.circle] = this.boundingBox.createCircle();
+            this.infoWindow = this.boundingBox.createInfoWindow();
+            this.boundingBox.addListeners();
 
             const panes = this.getPanes();
             panes.overlayLayer.appendChild(this.leftSide);
@@ -418,115 +542,22 @@ function initOverlay() {
             panes.overlayLayer.appendChild(this.bottomSide);
             panes.overlayLayer.appendChild(this.circleWrapper);
             panes.overlayLayer.appendChild(this.infoWindow);
-
-            this.leftSide.addEventListener('mouseleave', (e) => {
-                if (e.clientX < this.leftSide.getBoundingClientRect().left) {
-                    this.infoWindow.style.visibility = "hidden";
-                } else {
-                    this.infoWindow.style.visibility = "visible";
-                }
-            });
-
-
-            this.rightSide.addEventListener('mouseleave', (e) => {
-                if (e.clientX > this.rightSide.getBoundingClientRect().left && e.clientY > this.infoWindow.getBoundingClientRect().bottom) {
-                    this.infoWindow.style.visibility = "hidden";
-                } else {
-                    this.infoWindow.style.visibility = "visible";
-                }
-            });
-
-            this.topSide.addEventListener('mouseleave', (e) => {
-                if (e.clientY < this.topSide.getBoundingClientRect().top) {
-                    this.infoWindow.style.visibility = "hidden";
-                } else {
-                    this.infoWindow.style.visibility = "visible";
-                }
-            });
-
-            this.bottomSide.addEventListener('mouseleave', (e) => {
-                if (e.clientY > this.bottomSide.getBoundingClientRect().top) {
-                    this.infoWindow.style.visibility = "hidden";
-                } else {
-                    this.infoWindow.style.visibility = "visible";
-                }
-            });
-
-            this.circle.addEventListener('click', () => {
-                if (this.infoWindow.style.visibility === "visible") {
-                    this.infoWindow.style.visibility = "hidden";
-                } else {
-                    this.infoWindow.style.visibility = "visible";
-                }
-            });
-
-            this.infoWindow.addEventListener('mouseleave', () => {
-                this.infoWindow.style.visibility = "hidden";
-            });
         }
 
         draw() {
             // calculate new position according to current pitch and heading
             this.refreshCanvasSize();
-            if (this.leftSide && this.rightSide && this.topSide && this.bottomSide && this.circleWrapper && this.circle && this.infoWindow) {
+            if (this.boundingBox.isReady()) {
                 const currentPov = this.getMap().getPov();
                 if(!this.isOnScreen(currentPov)) {
-                    this.leftSide.style.visibility = 'hidden';
-                    this.leftSide.classList.add('hidden');
-                    this.rightSide.style.visibility = 'hidden';
-                    this.rightSide.classList.add('hidden');
-                    this.topSide.style.visibility = 'hidden';
-                    this.topSide.classList.add('hidden');
-                    this.bottomSide.style.visibility = 'hidden';
-                    this.bottomSide.classList.add('hidden');
-                    this.circleWrapper.style.visibility = 'hidden';
-                    this.circleWrapper.classList.add('hidden');
-                    this.infoWindow.style.visibility = 'hidden';
+                    this.boundingBox.hideComponents();
                     return;
                 }
 
                 const newCoords = this.calculateCurrentCoords(currentPov);
 
-                this.leftSide.classList.remove('hidden');
-                this.leftSide.style.visibility = preferences.rect ? 'visible' : 'hidden';
-                this.rightSide.classList.remove('hidden');
-                this.rightSide.style.visibility = preferences.rect ? 'visible' : 'hidden';
-                this.topSide.classList.remove('hidden');
-                this.topSide.style.visibility = preferences.rect ? 'visible' : 'hidden';
-                this.bottomSide.classList.remove('hidden');
-                this.bottomSide.style.visibility = preferences.rect ? 'visible' : 'hidden';
-
-                this.circleWrapper.classList.remove('hidden');
-                this.circleWrapper.style.visibility = preferences.dot ? 'visible' : 'hidden';
-
-                this.leftSide.style.left = `${newCoords.left}px`;
-                this.leftSide.style.top = `${newCoords.top}px`;
-
-                this.rightSide.style.left = `${newCoords.left + newCoords.width}px`;
-                this.rightSide.style.top = `${newCoords.top}px`;
-
-                this.topSide.style.left = `${newCoords.left}px`;
-                this.topSide.style.top = `${newCoords.top}px`;
-
-                this.bottomSide.style.left = `${newCoords.left}px`;
-                this.bottomSide.style.top = `${newCoords.top + newCoords.height}px`;
-
-                this.leftSide.style.height = `${newCoords.height}px`;
-                this.rightSide.style.height = `${newCoords.height}px`;
-                this.topSide.style.width = `${newCoords.width}px`;
-                this.bottomSide.style.width = `${newCoords.width + 3}px`;
-
-                this.infoWindow.style.left = `${newCoords.left + newCoords.width + 3}px`;
-                this.infoWindow.style.top = `${newCoords.top}px`;
-
-
-                this.circleWrapper.setAttribute("width", Math.max(newCoords.width, 15));
-                this.circleWrapper.setAttribute("height", Math.max(newCoords.height, 15));
-
-                this.circleWrapper.style.left = `${newCoords.left}px`;
-                this.circleWrapper.style.top = `${newCoords.top}px`;
-
-                this.circle.setAttribute("r", Math.max(Math.min(newCoords.width / 3, 15), 7) );
+                this.boundingBox.paint(newCoords);
+                this.boundingBox.showComponents();
             }
         }
 
@@ -547,6 +578,14 @@ function initOverlay() {
                 this.bottomSide.parentNode.removeChild(this.bottomSide);
                 delete this.bottomSide;
             }
+            if (this.circleWrapper) {
+                this.circleWrapper.parentNode.removeChild(this.circleWrapper);
+                delete this.circleWrapper;
+            }
+            if (this.infoWindow) {
+                this.infoWindow.parentNode.removeChild(this.infoWindow);
+                delete this.infoWindow;
+            }
         }
 
         isOnScreen(currentPov) {
@@ -554,7 +593,7 @@ function initOverlay() {
             const screenTopright = this.pointToSphere(this.canvasWidth, 0, currentPov.heading, currentPov.pitch, currentPov.zoom);
             const screenBottomleft = this.pointToSphere(0, this.canvasHeight, currentPov.heading, currentPov.pitch, currentPov.zoom);
             const screenBottomright = this.pointToSphere(this.canvasWidth, this.canvasHeight, currentPov.heading, currentPov.pitch, currentPov.zoom);
-            
+
             // Normalize the right edge
             if(Math.abs(screenTopright.phi - screenBottomright.phi) > Math.abs(Math.abs(screenTopright.phi - screenBottomright.phi) - 2 * Math.PI)) {
                 if(screenTopright.phi > screenBottomright.phi) {
