@@ -165,6 +165,7 @@ function initStreetView() {
     }
 }
 
+//#region BoundingBox
 class BoundingBox{
     topleft;
     topright;
@@ -240,9 +241,9 @@ class BoundingBox{
 
         this.circleWrapper = document.createElementNS(this.svgNS, "svg");
         this.circleWrapper.style.opacity = "0.7";
-        // Define the blur filter
-        const defs = document.createElementNS(this.svgNS, "defs");
 
+        // Add blur filter to a circle
+        const defs = document.createElementNS(this.svgNS, "defs");
         const filter = document.createElementNS(this.svgNS, "filter");
         filter.setAttribute("id", "blur");
 
@@ -306,6 +307,7 @@ class BoundingBox{
         description.style.margin = "0";
         description.style.width = "90%";
 
+        // Create an exit button
         this.exitSVG = document.createElementNS(this.svgNS, "svg");
         this.exitSVG.style.pointerEvents = "auto";
         this.exitSVG.setAttribute("width", "1.5rem");
@@ -320,6 +322,7 @@ class BoundingBox{
         const path = document.createElementNS(this.svgNS, "path");
         path.setAttribute("d", "M 7.71875 6.28125 L 6.28125 7.71875 L 23.5625 25 L 6.28125 42.28125 L 7.71875 43.71875 L 25 26.4375 L 42.28125 43.71875 L 43.71875 42.28125 L 26.4375 25 L 43.71875 7.71875 L 42.28125 6.28125 L 25 23.5625 Z");
         path.style.fill = "white";
+
         // align path in the middle
         path.setAttribute("x", "0");
         path.setAttribute("y", "0");
@@ -456,8 +459,9 @@ class BoundingBox{
         return this.leftSide && this.rightSide && this.topSide && this.bottomSide && this.circleWrapper && this.circle && this.infoWindow;
     }
 }
+//#endregion BoundingBox
 
-//#region Overlay
+//#region OverlayBox
 function initOverlay() {
     class SpherePoint {
         // we only have theta and phi here since r can be calculated as focal length, and in most cases we just need theta and phi
@@ -741,7 +745,7 @@ function initOverlay() {
     }
 }
 
-//#endregion Overlay
+//#endregion OverlayBox
 
 //#region Managers
 const ActivePanoramaManager = (function() {
@@ -810,13 +814,13 @@ const HiddenPanoramaManager = (function() {
         getCanvasElement: function() {
             return getCanvasElement();
         },
-        
+
         getCanvasSize: function() {
             const canvas = getCanvasElement();
 
             return { width: canvas.offsetWidth, height: canvas.offsetHeight };
         },
-        
+
         getPanorama: function() {
             return panorama;
         },
