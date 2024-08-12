@@ -361,7 +361,6 @@ function initOverlay() {
             this.infoWindow.style.padding = "0.5rem";
             this.infoWindow.style.borderRadius = "0.5rem";
             this.infoWindow.style.zIndex = "1000";
-            this.infoWindow.style.transition = "visibility 0.3s";
             this.infoWindow.style.overflow = "hidden";
             this.infoWindow.style.width = "250px";
 
@@ -384,7 +383,6 @@ function initOverlay() {
             exitSVG.style.right = "0.5rem";
             exitSVG.style.cursor = "pointer";
             exitSVG.style.fill = "white";
-            exitSVG.style.transition = "fill 0.3s";
             exitSVG.style.zIndex = "1001";
 
             const path = document.createElementNS(svgNS, "path");
