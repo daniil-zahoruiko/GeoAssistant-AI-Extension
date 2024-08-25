@@ -497,10 +497,10 @@ function initOverlay() {
             this.refreshCanvasSize();
 
             const hiddenCanvasSize = HiddenPanoramaManager.getCanvasSize()
-            this.topleft = this.pointToSphere(topleftx, toplefty, heading, pitch, zoom, hiddenCanvasSize.width, hiddenCanvasSize.height);
-            this.topright = this.pointToSphere(bottomrightx, toplefty, heading, pitch, zoom, hiddenCanvasSize.width, hiddenCanvasSize.height);
-            this.bottomright = this.pointToSphere(bottomrightx, bottomrighty, heading, pitch, zoom, hiddenCanvasSize.width, hiddenCanvasSize.height);
-            this.bottomleft = this.pointToSphere(topleftx, bottomrighty, heading, pitch, zoom, hiddenCanvasSize.width, hiddenCanvasSize.height);
+            this.topleft = this.pointToSphere(topleftx / window.devicePixelRatio, toplefty / window.devicePixelRatio, heading, pitch, zoom, hiddenCanvasSize.width, hiddenCanvasSize.height);
+            this.topright = this.pointToSphere(bottomrightx / window.devicePixelRatio, toplefty / window.devicePixelRatio, heading, pitch, zoom, hiddenCanvasSize.width, hiddenCanvasSize.height);
+            this.bottomright = this.pointToSphere(bottomrightx / window.devicePixelRatio, bottomrighty / window.devicePixelRatio, heading, pitch, zoom, hiddenCanvasSize.width, hiddenCanvasSize.height);
+            this.bottomleft = this.pointToSphere(topleftx / window.devicePixelRatio, bottomrighty / window.devicePixelRatio, heading, pitch, zoom, hiddenCanvasSize.width, hiddenCanvasSize.height);
 
             this.coords = [this.topleft, this.topright, this.bottomright, this.bottomleft];
 
@@ -686,7 +686,7 @@ function initOverlay() {
             heading = this.toRadian(heading);
             pitch = this.toRadian(90 - pitch);
             phi = (phi - heading + 2 * Math.PI) % (2 * Math.PI);
-            const z = (this.canvasWidth / 2) / Math.tan(Math.atan(Math.pow(2,1-zoom)));
+            const z = (this.canvasWidth / 2) / Math.pow(2, 1 - zoom);
 
             const reversePitchCoords = this.sphericalRotateX(theta, phi, -pitch);
             const len = Math.sqrt(Math.pow(z / Math.cos(reversePitchCoords.theta), 2) - z * z);
