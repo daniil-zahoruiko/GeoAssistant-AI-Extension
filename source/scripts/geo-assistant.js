@@ -686,7 +686,6 @@ function initOverlay() {
             heading = this.toRadian(heading);
             pitch = this.toRadian(90 - pitch);
             phi = (phi - heading + 2 * Math.PI) % (2 * Math.PI);
-            console.log(zoom);
             if(zoom === 0) {
                 zoom = -0.005 - 0.2 * (window.devicePixelRatio - 1);
             }
