@@ -8,7 +8,7 @@
  	"description": "Learn more about the world with GeoAssistant AI",
 	"web_accessible_resources": [{
 		"matches": ["https://www.geoguessr.com/*"],
-		"resources": ["scripts/injected.js", "images/logo.svg"]
+		"resources": ["scripts/geo-assistant.js", "images/logo.svg"]
 	}, 
 	{ 
 		"matches": ["<all_urls>"],

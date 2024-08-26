@@ -25,6 +25,6 @@ function fetchSVG() {
 (async() => {
     fetchSVG();
     var script = document.createElement('script');
-    script.src = chrome.runtime.getURL("scripts/injected.js");
+    script.src = chrome.runtime.getURL("scripts/geo-assistant.js");
     (document.head || document.documentElement).appendChild(script);
 })();
