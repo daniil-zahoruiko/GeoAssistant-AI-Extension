@@ -496,7 +496,7 @@ function initOverlay() {
             this.cls = cls;
             this.refreshCanvasSize();
 
-            const hiddenCanvasSize = HiddenPanoramaManager.getCanvasSize()
+            const hiddenCanvasSize = HiddenPanoramaManager.getCanvasSize();
             this.topleft = this.pointToSphere(topleftx / window.devicePixelRatio, toplefty / window.devicePixelRatio, heading, pitch, zoom, hiddenCanvasSize.width, hiddenCanvasSize.height);
             this.topright = this.pointToSphere(bottomrightx / window.devicePixelRatio, toplefty / window.devicePixelRatio, heading, pitch, zoom, hiddenCanvasSize.width, hiddenCanvasSize.height);
             this.bottomright = this.pointToSphere(bottomrightx / window.devicePixelRatio, bottomrighty / window.devicePixelRatio, heading, pitch, zoom, hiddenCanvasSize.width, hiddenCanvasSize.height);
@@ -686,8 +686,9 @@ function initOverlay() {
             heading = this.toRadian(heading);
             pitch = this.toRadian(90 - pitch);
             phi = (phi - heading + 2 * Math.PI) % (2 * Math.PI);
+            console.log(zoom);
             if(zoom === 0) {
-                zoom = -0.2 * (window.devicePixelRatio - 1);
+                zoom = -0.005 - 0.2 * (window.devicePixelRatio - 1);
             }
             const z = (this.canvasWidth / 2) / Math.pow(2, 1 - zoom);
 
@@ -714,7 +715,10 @@ function initOverlay() {
             pitch = this.toRadian(90 - pitch);
 
             // focal length
-            const z = (width / 2) / Math.tan(Math.atan(Math.pow(2,1-zoom)));
+            if(zoom === 0) {
+                zoom = -0.005 - 0.2 * (window.devicePixelRatio - 1);
+            }
+            const z = (width / 2) / Math.pow(2, 1 - zoom);
 
             // angle offset within the viewport
             let theta = Math.acos(z / Math.sqrt(x * x + y * y + z * z));
