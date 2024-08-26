@@ -686,6 +686,9 @@ function initOverlay() {
             heading = this.toRadian(heading);
             pitch = this.toRadian(90 - pitch);
             phi = (phi - heading + 2 * Math.PI) % (2 * Math.PI);
+            if(zoom === 0) {
+                zoom = -0.2 * (window.devicePixelRatio - 1);
+            }
             const z = (this.canvasWidth / 2) / Math.pow(2, 1 - zoom);
 
             const reversePitchCoords = this.sphericalRotateX(theta, phi, -pitch);
