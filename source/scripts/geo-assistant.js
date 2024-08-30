@@ -131,6 +131,7 @@ async function updateCurrentBoundingBoxes() {
             if(pano === ActivePanoramaManager.getPanorama().getPano()) {
                 const pov = HiddenPanoramaManager.getPanorama().getPov();
                 boundingBoxes[0].forEach(boundingBox => {
+                    console.log(boundingBox);
                     const overlay = new BoundingBoxOverlay( boundingBox.coords[0],
                                                             boundingBox.coords[1],
                                                             boundingBox.coords[2],
@@ -463,11 +464,71 @@ class BoundingBox{
 
 //#region OverlayBox
 function initOverlay() {
+    class CartesianPoint {
+        constructor(x, y, z) {
+            this.x = x;
+            this.y = y;
+            this.z = z;
+        }
+    }
+
+    class Matrix3x3 {
+        constructor(p1, p2, p3) {
+            this.mat = [
+                [p1.x, p1.y, p1.z], 
+                [p2.x, p2.y, p2.z],
+                [p3.x, p3.y, p3.z]
+            ];
+        }
+
+        replaceRow(p, row) {
+            this.mat[row] = [p.x, p.y, p.z];
+        }
+
+        determinant() {
+            const m = this.mat;
+            return m[0][0] * (m[1][1] * m[2][2] - m[1][2] * m[2][1]) - m[0][1] * (m[1][0] * m[2][2] - m[1][2] * m[2][0]) + m[0][2] * (m[1][0] * m[2][1] - m[1][1] * m[2][0]);
+        }
+    }
+
+    class Triangle {
+        constructor(p1, p2, p3) {
+            this.p1 = p1;
+            this.p2 = p2;
+            this.p3 = p3;
+        }
+
+        isInTriangle(p) {
+            const triangleMatrix = new Matrix3x3(this.p1, this.p2, this.p3);
+            const trianglePoints = [this.p1, this.p2, this.p3];
+
+            const dets = [];
+
+            for(let i = 0; i < trianglePoints.length; i++) {
+                triangleMatrix.replaceRow(p, i);
+                dets.push(triangleMatrix.determinant());
+                triangleMatrix.replaceRow(trianglePoints[i], i);
+            }
+
+            if((dets[0] >= 0 && dets[1] >= 0 && dets[2] >= 0) || (dets[0] <= 0 && dets[1] <= 0 && dets[2] <= 0)) {
+                return true;
+            }
+            
+            return false;
+        }
+    }
+
     class SpherePoint {
         // we only have theta and phi here since r can be calculated as focal length, and in most cases we just need theta and phi
         constructor(theta, phi) {
             this.theta = theta;
             this.phi = phi;
+        }
+
+        asCartesian()
+        {
+            // we assume r=1 here since it doesn't matter in this context
+            return new CartesianPoint(Math.sin(this.theta) * Math.cos(this.phi), Math.sin(this.theta) * Math.sin(this.phi), Math.cos(this.theta));
         }
     }
 
@@ -598,66 +659,38 @@ function initOverlay() {
             const screenBottomleft = this.pointToSphere(0, this.canvasHeight, currentPov.heading, currentPov.pitch, currentPov.zoom);
             const screenBottomright = this.pointToSphere(this.canvasWidth, this.canvasHeight, currentPov.heading, currentPov.pitch, currentPov.zoom);
 
-            // Normalize the right edge
-            if(Math.abs(screenTopright.phi - screenBottomright.phi) > Math.abs(Math.abs(screenTopright.phi - screenBottomright.phi) - 2 * Math.PI)) {
-                if(screenTopright.phi > screenBottomright.phi) {
-                    screenTopright.phi -= 2 * Math.PI;
+            const screenCoords = [screenTopleft.asCartesian(), screenTopright.asCartesian(), screenBottomleft.asCartesian(), screenBottomright.asCartesian()];
+
+            const screenCenter = this.pointToSphere(this.canvasWidth / 2, this.canvasHeight / 2, currentPov.heading, currentPov.pitch, currentPov.zoom).asCartesian();
+
+            const triangles = [
+                new Triangle(screenCoords[0], screenCoords[1], screenCoords[2]),
+                new Triangle(screenCoords[0], screenCoords[1], screenCoords[3]),
+                new Triangle(screenCoords[0], screenCoords[2], screenCoords[3]),
+                new Triangle(screenCoords[1], screenCoords[2], screenCoords[3])
+            ];
+
+            for(let i = 0; i < this.coords.length; i++) {
+                const point = this.coords[i].asCartesian();
+                
+                // check that the point is in the same hemisphere as the screen - if not, we can tell it's not on the screen right away
+                const dotProduct = point.x * screenCenter.x + point.y * screenCenter.y + point.z * screenCenter.z;
+                const magnitudeProduct = Math.sqrt(point.x * point.x + point.y * point.y + point.z * point.z) * Math.sqrt(screenCenter.x * screenCenter.x + screenCenter.y * screenCenter.y + screenCenter.z * screenCenter.z);
+                const angle = Math.acos(dotProduct / magnitudeProduct);
+
+                if(angle > Math.PI / 2) {
+                    continue;
                 }
-                else {
-                    screenBottomright.phi -= 2 * Math.PI;
-                }
-            }
 
-            // Normalize the angles of the left edge
-            if(screenTopleft.phi > screenTopright.phi || screenTopleft.phi > screenBottomright.phi) {
-                screenTopleft.phi -= 2 * Math.PI;
-            }
-            if(screenBottomleft.phi > screenTopright.phi || screenBottomleft.phi > screenBottomright.phi) {
-                screenBottomleft.phi -= 2 * Math.PI;
-            }
-
-            const screenCoords = [screenTopleft, screenTopright, screenBottomright, screenBottomleft];
-
-            var that = this;
-            function isPointWithinPolygon(phiOffset)
-            {
-                for(let i = 0; i < that.coords.length; i++) {
-                    let inside = false;
-
-                    let p1 = screenCoords[0]; // Top Left coordinate
-                    let p2;
-                    const theta = that.coords[i].theta;
-                    const phi = that.coords[i].phi - phiOffset;
-                    for(let j = 1; j <= screenCoords.length; j++) {
-                        // Get the next point in the polygon
-                        p2 = screenCoords[j % screenCoords.length];
-
-                        // Check if the point is above the minimum theta coordinate of the edge
-                        if(theta > Math.min(p1.theta, p2.theta)) {
-                            if(theta <= Math.max(p1.theta, p2.theta)) {
-                                if(phi <= Math.max(p1.phi, p2.phi)) {
-                                    const phi_intersection = ((theta - p1.theta) * (p2.phi - p1.phi)) / (p2.theta - p1.theta) + p1.phi;
-                                    // If the point is to the left of intersection, the point is inside the polygon
-                                    if(phi <= phi_intersection) {
-                                        inside = !inside;
-                                    }
-                                }
-                            }
-                        }
-
-                        p1 = p2;
-                    }
-
-                    if(inside) {
+                // check that the point is within one of the triangles formed by different combinations of screen points
+                for(let j = 0; j < triangles.length; j++) {
+                    if(triangles[i].isInTriangle(point)) {
                         return true;
                     }
                 }
-
-                return false;
             }
-
-            // check with and without normalization
-            return isPointWithinPolygon(0) || isPointWithinPolygon(2 * Math.PI);
+            
+            return false;
         }
 
         calculateCurrentCoords(currentPov) {
