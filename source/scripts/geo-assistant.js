@@ -909,11 +909,11 @@ const UIManager = (function() {
 
     const currentPovLoader = createLoader();
     currentPovLoader.style.left = "82%";
-    currentPovLoader.style.top = "13px";
+    currentPovLoader.style.top = "0.75rem";
 
     const scan360Loader = createLoader();
     scan360Loader.style.left = "72%";
-    scan360Loader.style.top = "13px";
+    scan360Loader.style.top = "0.75rem";
 
     function createLogo() {
         return logo;
