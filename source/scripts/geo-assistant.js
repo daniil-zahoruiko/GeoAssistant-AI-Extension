@@ -833,7 +833,7 @@ const HiddenPanoramaManager = (function() {
                 return;
             }
             const copyDiv = document.createElement('div');
-            copyDiv.id = 'copyDiv';
+            copyDiv.id = 'helper';
             copyDiv.style.position = 'absolute';
             copyDiv.style.top = '0px';
             copyDiv.style.width = '1920px';
@@ -845,7 +845,7 @@ const HiddenPanoramaManager = (function() {
         },
 
         initPanorama: function() {
-            panorama = new google.maps.StreetViewPanorama(document.getElementById('copyDiv'), {
+            panorama = new google.maps.StreetViewPanorama(document.getElementById('helper'), {
                  showRoadLabels: false
             });
         },
