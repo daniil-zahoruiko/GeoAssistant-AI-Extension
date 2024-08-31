@@ -949,6 +949,7 @@ const UIManager = (function() {
         scan360Button.style.position = "relative";
         scan360Button.innerText = 'Scan 360';
         scan360Button.style.pointerEvents = "auto";
+        scan360Button.style.height = "1rem";
 
         scan360Button.appendChild(scan360Loader);
 
@@ -978,6 +979,7 @@ const UIManager = (function() {
         currentPOVButton.style.position = "relative";
         currentPOVButton.style.cursor = "pointer";
         currentPOVButton.style.pointerEvents = "auto";
+        currentPOVButton.style.height = "1rem";
 
         currentPOVButton.appendChild(currentPovLoader);
 
@@ -1008,7 +1010,7 @@ const UIManager = (function() {
             toggleWrapper.style.flexDirection = 'column';
             toggleWrapper.style.gap = '1rem';
             toggleWrapper.style.visibility = 'hidden';
-            toggleWrapper.style.fontSize = '13px';
+            toggleWrapper.style.fontSize = '0.8rem';
 
             toggleWrapper.appendChild(logo);
             toggleWrapper.appendChild(scan360Button);
