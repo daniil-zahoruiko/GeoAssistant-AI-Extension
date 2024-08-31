@@ -72,7 +72,7 @@ window.addEventListener('message', function(event) {
 //#region Fetch bounding boxes
 async function updateAllBoundingBoxes()
 {
-    UIManager.disable();
+    UIManager.disable(false);
     const pano = ActivePanoramaManager.getPanorama().getPano();
     const data = await HiddenPanoramaManager.getEntireImageData();
 
@@ -112,7 +112,7 @@ async function updateAllBoundingBoxes()
 }
 
 async function updateCurrentBoundingBoxes() {
-    UIManager.disable();
+    UIManager.disable(true);
     const pano = ActivePanoramaManager.getPanorama().getPano();
     const data = await HiddenPanoramaManager.getCurrentImageData();
 
@@ -906,63 +906,24 @@ const HiddenPanoramaManager = (function() {
 
 const UIManager = (function() {
     let toggleWrapper = null;
-    let scanningBanner = null;
+
+    const currentPovLoader = createLoader();
+    currentPovLoader.style.left = "82%";
+    currentPovLoader.style.top = "13px";
+
+    const scan360Loader = createLoader();
+    scan360Loader.style.left = "72%";
+    scan360Loader.style.top = "13px";
 
     function createLogo() {
         return logo;
     }
 
-    function createScanningBanner() {
-        scanningBanner = document.createElement('div');
-        scanningBanner.style.color = "green";
-        scanningBanner.style.fontWeight = "bold";
-        scanningBanner.style.display = 'flex';
-        scanningBanner.style.flexDirection = 'row';
-        scanningBanner.style.gap = '0rem';
-        scanningBanner.style.alignItems = 'left';
-        scanningBanner.style.justifyContent = 'center';
-        scanningBanner.style.visibility = 'hidden';
+    function createLoader() {
+        const loader = document.createElement('div');
+        loader.classList.add('geo-assistant-loader');
 
-        const scanningBannerText = document.createElement('p');
-        scanningBannerText.innerText = 'Scanning';
-        scanningBannerText.style.margin = 'auto 0';
-
-        const scanningLoaderWrapper = document.createElement('div');
-        scanningLoaderWrapper.style.position = 'relative';
-
-        const dot1 = document.createElement('p');
-        const dot2 = document.createElement('p');
-        const dot3 = document.createElement('p');
-        dot1.id = 'dot1';
-        dot2.id = 'dot2';
-        dot3.id = 'dot3';
-        dot1.innerText = '.';
-        dot2.innerText = '.';
-        dot3.innerText = '.';
-        dot1.style.fontSize = "1.5rem";
-        dot2.style.fontSize = "1.5rem";
-        dot3.style.fontSize = "1.5rem";
-        dot1.style.margin = 'auto 0';
-        dot2.style.margin = 'auto 0';
-        dot3.style.margin = 'auto 0';
-        dot1.style.position = 'absolute';
-        dot2.style.position = 'absolute';
-        dot3.style.position = 'absolute';
-        dot1.style.bottom = '-1.5px';
-        dot2.style.bottom = '-1.5px';
-        dot3.style.bottom = '-1.5px';
-        dot1.style.left = '0';
-        dot2.style.left = '0.4rem';
-        dot3.style.left = '0.8rem';
-
-        scanningLoaderWrapper.appendChild(dot1);
-        scanningLoaderWrapper.appendChild(dot2);
-        scanningLoaderWrapper.appendChild(dot3);
-
-        scanningBanner.appendChild(scanningBannerText);
-        scanningBanner.appendChild(scanningLoaderWrapper);
-
-        return scanningBanner;
+        return loader;
     }
 
     function mouseOutEffect(e) {
@@ -976,21 +937,28 @@ const UIManager = (function() {
     function create360Button()
     {
         // Create a 360 button
-        const scan360Button = document.createElement('button');
-        scan360Button.innerText = 'Scan 360°';
+        const scan360Button = document.createElement('div');
+        scan360Button.classList.add('button');
         scan360Button.style.background = "linear-gradient(180deg, rgba(161, 155, 217, 0.6) 0%, rgba(161, 155, 217, 0) 50%, rgba(161, 155, 217, 0) 50%), rgba(86, 59, 154, 0.8)";
         scan360Button.style.color = "white";
         scan360Button.style.borderRadius = "1rem";
         scan360Button.style.padding = "1rem 2rem";
         scan360Button.style.transition = "background 0.3s";
+        scan360Button.style.cursor = "pointer";
+        scan360Button.style.textAlign = "center";
+        scan360Button.style.position = "relative";
+        scan360Button.innerText = 'Scan 360';
+        scan360Button.style.pointerEvents = "auto";
+
+        scan360Button.appendChild(scan360Loader);
 
         scan360Button.addEventListener('click', () => {
             updateAllBoundingBoxes();
         });
 
-        scan360Button.addEventListener('mouseover', mouseOverEffect);
+        scan360Button.addEventListener('mouseenter', mouseOverEffect);
 
-        scan360Button.addEventListener('mouseout', mouseOutEffect);
+        scan360Button.addEventListener('mouseleave', mouseOutEffect);
 
         return scan360Button
     }
@@ -998,93 +966,31 @@ const UIManager = (function() {
     function createCurrentPOVButton()
     {
         // Create a current pov button
-        const currentPOVButton = document.createElement('button');
+        const currentPOVButton = document.createElement('div');
+        currentPOVButton.classList.add('button');
         currentPOVButton.innerText = 'Scan visible area';
         currentPOVButton.style.background = "linear-gradient(180deg, rgba(161, 155, 217, 0.6) 0%, rgba(161, 155, 217, 0) 50%, rgba(161, 155, 217, 0) 50%), rgba(86, 59, 154, 0.8)";
         currentPOVButton.style.color = "white";
         currentPOVButton.style.borderRadius = "1rem";
         currentPOVButton.style.padding = "1rem 2rem";
         currentPOVButton.style.transition = "background 0.3s";
+        currentPOVButton.style.textAlign = "center";
+        currentPOVButton.style.position = "relative";
+        currentPOVButton.style.cursor = "pointer";
+        currentPOVButton.style.pointerEvents = "auto";
+
+        currentPOVButton.appendChild(currentPovLoader);
 
         currentPOVButton.addEventListener('click', () => {
             updateCurrentBoundingBoxes();
         });
 
-        currentPOVButton.addEventListener('mouseover', mouseOverEffect);
+        currentPOVButton.addEventListener('mouseenter', mouseOverEffect);
 
-        currentPOVButton.addEventListener('mouseout', mouseOutEffect);
+        currentPOVButton.addEventListener('mouseleave', mouseOutEffect);
 
         return currentPOVButton;
     }
-
-    // Direction of the dots(1 - up, 0 - down)
-    let d1 = 1;
-    let d2 = 1;
-    let d3 = 1;
-
-    // Initial translation values(in px)
-    let count1 = 4;
-    let count2 = 2;
-    let count3 = 0;
-
-    const max = 6;
-    const step = 0.4;
-
-    // Cancel flag
-    let cancel = false;
-
-    function scanAnimation() {
-
-        count1 += step;
-        count2 += step;
-        count3 += step;
-
-        // dot1
-        const dot1 = document.getElementById("dot1");
-        if (d1) {
-            dot1.style.transform = `translateY(-${count1}px)`;
-        } else {
-            dot1.style.transform = `translateY(-${max - count1}px)`;
-        }
-        if (count1 >= max) {
-            d1 = !d1;
-            count1 = 0;
-        }
-
-        // dot2
-        const dot2 = document.getElementById("dot2");
-        if (d2) {
-            dot2.style.transform = `translateY(-${count2}px)`;
-        } else {
-            dot2.style.transform = `translateY(-${max - count2}px)`;
-        }
-        if (count2 >= max) {
-            d2 = !d2;
-            count2 = 0;
-        }
-        // dot3
-        const dot3 = document.getElementById("dot3");
-        if (d3) {
-            dot3.style.transform = `translateY(-${count3}px)`;
-        } else {
-            dot3.style.transform = `translateY(-${max - count3}px)`;
-        }
-        if (count3 >= max) {
-            d3 = !d3;
-            count3 = 0;
-        }
-
-        // If the cancel flag is set, reset the values and return
-        if (cancel) {
-            cancel = false;
-            d1 = d2 = d3 = 1;
-            count1 = 4;
-            count2 = 2;
-            count3 = 0;
-            return;
-        }
-        window.requestAnimationFrame(scanAnimation);
-      }
 
     return {
         initUI: function() {
@@ -1092,22 +998,21 @@ const UIManager = (function() {
             const scan360Button = create360Button();
             const currentPOVButton = createCurrentPOVButton();
             const logo = createLogo();
-            scanningBanner = createScanningBanner();
 
             toggleWrapper = document.createElement('div');
             toggleWrapper.style.position = 'absolute';
-            toggleWrapper.style.bottom = '17rem';
+            toggleWrapper.style.bottom = '22rem';
             toggleWrapper.style.left = '1.5rem';
             toggleWrapper.style.zIndex = '10';
             toggleWrapper.style.display = 'flex';
             toggleWrapper.style.flexDirection = 'column';
             toggleWrapper.style.gap = '1rem';
             toggleWrapper.style.visibility = 'hidden';
+            toggleWrapper.style.fontSize = '13px';
 
             toggleWrapper.appendChild(logo);
             toggleWrapper.appendChild(scan360Button);
             toggleWrapper.appendChild(currentPOVButton);
-            toggleWrapper.appendChild(scanningBanner);
 
             document.body.appendChild(toggleWrapper);
         },
@@ -1118,6 +1023,8 @@ const UIManager = (function() {
 
         hideToggles: function() {
             toggleWrapper.style.visibility = 'hidden';
+            currentPovLoader.style.visibility = 'hidden';
+            scan360Loader.style.visibility = 'hidden';
         },
 
         remove: function(){
@@ -1126,25 +1033,28 @@ const UIManager = (function() {
             }
         },
 
-        disable: function() {
-            scanningBanner.style.visibility = 'visible';
-            window.requestAnimationFrame(scanAnimation);
+        disable: function(currentPov) {
+            if (currentPov) {
+                currentPovLoader.style.visibility = 'visible';
+            } else {
+                scan360Loader.style.visibility = 'visible';
+            }
             if (!toggleWrapper) return;
-            [...toggleWrapper.getElementsByTagName('button')].forEach(button => {
-                button.disabled = "disabled";
+            [...toggleWrapper.getElementsByClassName('button')].forEach(button => {
+                button.style.pointerEvents = "none";
                 button.style.background = "linear-gradient(180deg, rgba(161, 155, 217, 0.6) 0%, rgba(161, 155, 217, 0) 50%, rgba(161, 155, 217, 0) 50%), rgba(86, 59, 154, 1)";
-                button.removeEventListener('mouseout', mouseOutEffect);
+                button.removeEventListener('mouseleave', mouseOutEffect);
             });
         },
 
         enable: function() {
-            scanningBanner.style.visibility = 'hidden';
-            cancel = true;
+            currentPovLoader.style.visibility = 'hidden';
+            scan360Loader.style.visibility = 'hidden';
             if (!toggleWrapper) return;
-            [...toggleWrapper.getElementsByTagName('button')].forEach(button => {
-                button.disabled = "";
+            [...toggleWrapper.getElementsByClassName('button')].forEach(button => {
+                button.style.pointerEvents = "auto";
                 button.style.background = "linear-gradient(180deg, rgba(161, 155, 217, 0.6) 0%, rgba(161, 155, 217, 0) 50%, rgba(161, 155, 217, 0) 50%), rgba(86, 59, 154, 0.8)";
-                button.addEventListener('mouseout', mouseOutEffect);
+                button.addEventListener('mouseleave', mouseOutEffect);
             });
         },
     }
