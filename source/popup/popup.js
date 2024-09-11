@@ -14,6 +14,12 @@ document.addEventListener('DOMContentLoaded', (e) => {
         });
 });
 
+var read_me = document.getElementsByClassName('read_me_wrapper')[0];
+read_me.addEventListener('click', function() {
+    // open link to github
+    window.open("https://github.com/daniil-zahoruiko/GeoAssistant-AI-Extension", "_blank");
+});
+
 
 var rectBox = document.querySelector('#rect');
 var dotBox = document.querySelector('#dot');
