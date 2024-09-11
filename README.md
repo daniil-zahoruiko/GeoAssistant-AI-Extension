@@ -1,1 +1,3 @@
-This is a browser extension to extract an image from an active game of GeoGuessr
+<p align="center">
+  <img width="70%" src="./readme_helpers/logo.svg">
+</p>
