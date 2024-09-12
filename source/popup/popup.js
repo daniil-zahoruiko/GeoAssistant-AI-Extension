@@ -16,14 +16,11 @@ document.addEventListener('DOMContentLoaded', (e) => {
 
 var read_me = document.getElementsByClassName('read_me_wrapper')[0];
 read_me.addEventListener('click', function() {
-    // open link to github
     window.open("https://github.com/daniil-zahoruiko/GeoAssistant-AI-Extension", "_blank");
 });
 
 var contact_us = document.getElementsByClassName('contact_us_wrapper')[0];
 contact_us.addEventListener('click', function() {
-    // open link to github
-    // window.open("https://github.com/daniil-zahoruiko/GeoAssistant-AI-Extension", "_blank");
     window.open("mailto: geoassistantai@gmail.com", "_blank");
 });
 
