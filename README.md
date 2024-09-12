@@ -22,3 +22,10 @@ This extension is designed to be used only for educational purposes, thus, to al
 
 - **JavaScript:**
 - **<a href="https://developers.google.com/maps/documentation/streetview?_gl=1*1rn0145*_up*MQ..*_ga*MTM0ODA3MDYyNC4xNzI2MTI3MzEy*_ga_NRWSTWS78N*MTcyNjEyNzMxMS4xLjAuMTcyNjEyNzMxMS4wLjAuMA.." target="_blank">Google StreetView API</a>**
+
+<h1 align="center">Supported countries</h1>
+
+
+
+<h1 align="center">Contributions</h1>
+App was created by Daniil Zahoruiko, University of Alberta student, and Dmytro Avdieienko, University of Southampton student, where each contributed in all sections of development.
