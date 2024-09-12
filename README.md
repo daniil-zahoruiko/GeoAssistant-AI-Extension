@@ -14,6 +14,9 @@
   <img src="https://img.shields.io/badge/release-v1.0.0-blue?style=flat-square"/>
   <img src="https://img.shields.io/badge/release_date-september_2024-979621?style=flat-square"/>
   <img src="https://img.shields.io/badge/license-MIT-red?style=flat-square"/>
+  <img src="https://img.shields.io/badge/Google-StreetViewAPI-4285F4?logo=googlemaps&style=flat-square"/>
+  <img src="https://img.shields.io/badge/Google-Chrome_Extension-00897B?logo=googlechrome&style=flat-square"/>
+  <img src="https://img.shields.io/badge/Made_with-JavaScript-F7DF1E?logo=javascript&style=flat-square"/>
 </p>
 
 <p align="center">
