@@ -2,8 +2,7 @@
  	"manifest_version": 3,
 	"name": "GeoAssistant AI",
 	"permissions": ["scripting", "storage" , "activeTab", "tabs"],
-	"host_permissions": ["https://www.geoguessr.com/*", 
-						 "https://streetviewpixels-pa.googleapis.com/v1/*",
+	"host_permissions": ["https://www.geoguessr.com/*",
 						 "http://localhost/*"],
  	"description": "Learn more about the world with GeoAssistant AI",
 	"web_accessible_resources": [{
