@@ -48,7 +48,7 @@ This extension is designed to be used only for educational purposes, thus, to al
 
 <h1 align="center">Technologies used</h1>
 
-- **JavaScript:**
+- **JavaScript**
 - **<a href="https://developer.chrome.com/docs/extensions/develop">Chrome Extensions</a>**
 - **<a href="https://developers.google.com/maps/documentation/streetview?_gl=1*1rn0145*_up*MQ..*_ga*MTM0ODA3MDYyNC4xNzI2MTI3MzEy*_ga_NRWSTWS78N*MTcyNjEyNzMxMS4xLjAuMTcyNjEyNzMxMS4wLjAuMA..">Google StreetView API</a>**
 
