@@ -30,6 +30,15 @@ This extension is designed to be used only for educational purposes, thus, to al
 <h3>We strongly recommend watching <a href="https://youtu.be/MwEQZH-DiUg">Video Presentation</a>, as it showcases the extension's gameplay and covers all the essential features.</h3>
 <hr>
 
+<h3>UI</h3>
+
+The extension handlers are positioned to the left of the gameplay screen, just above the original GeoGuessr UI.
+
+<img src="https://github.com/daniil-zahoruiko/GeoAssistant-AI-Extension/blob/main/readme_helpers/UI.png"/>
+
+- **Scan 360** - Scans the whole panorama around you.
+- **Scan visible area** -  Scans only the area of the panorama currently displayed on the screen. This option is ideal for quickly identifying specific objects or high response speed.
+
 <h3>Use extension pop-up to setup preferences</h3>
 
 ![](https://github.com/daniil-zahoruiko/GeoAssistant-AI-Extension/blob/main/readme_helpers/pop_up.gif)
