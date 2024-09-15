@@ -1,15 +1,3 @@
-async function handleImageSave() {
-    await chrome.tabs.query({ active: true, lastFocusedWindow: true }, async (tabs) => {
-        const tab = tabs[0];
-
-        if(tab != null) {
-            const tabId = tab.id;
-            await chrome.tabs.sendMessage(tabId, { msg: 'imgSave' });
-        }
-    });
-
-}
-
 async function handlePreferencesChange(preferences) {
     chrome.storage.sync.set({"preferences": preferences});
     await chrome.tabs.query({ active: true, lastFocusedWindow: true }, async (tabs) => {
@@ -59,9 +47,7 @@ async function loadPreferences(origin) {
 }
 
 chrome.runtime.onMessage.addListener(function(msg, sender, sendResponse) {
-    if(msg.msg === 'SaveImage') {
-        handleImageSave();
-    } else if(msg.msg === 'preferencesChanged') {
+    if(msg.msg === 'preferencesChanged') {
         handlePreferencesChange(msg.preferences);
     } else if(msg.msg === 'loadPreferences') {
         loadPreferences(sender.origin);

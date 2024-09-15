@@ -1,19 +1,3 @@
-document.addEventListener('DOMContentLoaded', (e) => {
-    fetch(chrome.runtime.getURL('config.json'))
-        .then((response) => response.json())
-        .then((data) => {
-            if(data['dev-tools'] === true)
-            {
-                var btn = document.createElement("button");
-                btn.innerText = 'Save image';
-                btn.addEventListener('click', (e) => {
-                    chrome.runtime.sendMessage({msg: 'SaveImage'});
-                });
-                document.body.appendChild(btn);
-            }
-        });
-});
-
 var read_me = document.getElementsByClassName('read_me_wrapper')[0];
 read_me.addEventListener('click', function() {
     window.open("https://github.com/daniil-zahoruiko/GeoAssistant-AI-Extension", "_blank");
