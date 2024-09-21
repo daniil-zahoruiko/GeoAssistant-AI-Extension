@@ -60,6 +60,10 @@ The extension handlers are positioned to the left of the gameplay screen, just a
 - **JavaScript**
 - **<a href="https://developer.chrome.com/docs/extensions/develop">Chrome Extensions</a>**
 - **<a href="https://developers.google.com/maps/documentation/streetview?_gl=1*1rn0145*_up*MQ..*_ga*MTM0ODA3MDYyNC4xNzI2MTI3MzEy*_ga_NRWSTWS78N*MTcyNjEyNzMxMS4xLjAuMTcyNjEyNzMxMS4wLjAuMA..">Google StreetView API</a>**
+- **<a href="https://en.wikipedia.org/wiki/Equirectangular_projection">Equirectangular projection</a>**
+  - Our approach to calculating the screen coordinates of bounding boxes is based on the mathematical conversion between equirectangular and perspective projections. Once we receive the bounding box coordinates from the server, we first transform them into spherical coordinates on the equirectangular image, which is essentially the same as converting from perspective to equirectangular projection. <br>
+  
+    To compute the current screen coordinates of a bounding box, we take these spherical coordinates and apply the current heading, pitch, and zoom. This process is the same as converting from the equirectangular back to the perspective projection. It allows us to map the bounding box accurately onto the screen. If you would like to understand how it works deeper, here is a good <a href="https://blogs.codingballad.com/unwrapping-the-view-transforming-360-panoramas-into-intuitive-videos-with-python-6009bd5bca94">article</a> that goes into more details about these conversions.
 
 <h1 align="center">Contributions</h1>
 App was created by Daniil Zahoruiko and Dmytro Avdieienko.
